@@ -1,6 +1,8 @@
 #ifndef SYNTH_OSCILLATOR_H
 #define SYNTH_OSCILLATOR_H
 
+#include <vector>
+
 namespace Synth {
 class Oscillator {
 public:
@@ -23,6 +25,8 @@ private:
   void incrementPhase();
   void calculatePhaseIncrement();
 };
+
+using OscillatorGroup = std::vector<Oscillator>;
 
 } // namespace Synth
 
