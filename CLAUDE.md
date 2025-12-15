@@ -15,3 +15,8 @@ Reference docs in `docs/cpp-reference/` should be:
 - **Scannable** - clear sections, code examples, key takeaways
 - **Practical** - focus on "aha moments" and common gotchas
 - If it's too long or wordy, it won't get read!
+
+### Documentation Requirements
+1. **Table of Contents** - All doc files must include a table of contents with section links at the top
+2. **README.md Updates** - When creating new docs, add them to the corresponding README.md file in the directory
+3. **Keep Index Current** - Ensure all existing docs are listed in their directory's README.md

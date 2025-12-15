@@ -16,6 +16,7 @@
 - [Static Members](#static-members)
 - [Namespaces](#namespaces)
 - [Common Patterns](#common-patterns)
+- [Inheritance and Polymorphism](#inheritance-and-polymorphism)
 - [Quick Rules](#quick-rules)
 
 ## class vs struct
@@ -896,6 +897,44 @@ private:
 };
 ```
 
+## Inheritance and Polymorphism
+
+For advanced topics on inheritance, virtual functions, and polymorphism, see:
+- **[Polymorphism](polymorphism.md)** - Virtual functions, abstract classes, runtime polymorphism
+
+**Quick intro:**
+
+```cpp
+// Base class
+class Oscillator {
+public:
+  virtual float getNextSample() = 0;  // Pure virtual - must override
+  virtual ~Oscillator() {}            // Virtual destructor - required
+};
+
+// Derived class
+class SineOscillator : public Oscillator {
+public:
+  float getNextSample() override {    // Override base method
+    return std::sin(m_phase);
+  }
+private:
+  float m_phase = 0.0f;
+};
+
+// Usage - polymorphism
+Oscillator* osc = new SineOscillator();
+osc->getNextSample();  // Calls SineOscillator::getNextSample()
+```
+
+**Key points:**
+- `virtual` enables runtime polymorphism
+- `= 0` makes method pure virtual (abstract)
+- `override` explicitly marks overridden methods
+- Always have virtual destructor if class has virtual functions
+
+For details, see [polymorphism.md](polymorphism.md).
+
 ## Quick Rules
 
 1. **Use `class`** when you need private members (most of the time)
@@ -906,3 +945,4 @@ private:
 6. **Split header/implementation** for complex classes
 7. **Always use `#pragma once`** in headers
 8. **Use namespaces** to organize related classes and prevent name collisions
+9. **See [polymorphism.md](polymorphism.md)** for inheritance and virtual functions
