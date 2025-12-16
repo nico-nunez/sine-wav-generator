@@ -1,10 +1,10 @@
+#ifndef WAV_WRITER_H
+#define WAV_WRITER_H
+
 #include <cstdint>
 #include <fstream>
 #include <string_view>
 #include <vector>
-
-#ifndef WAV_WRITER_H
-#define WAV_WRITER_H
 
 namespace WavWriter {
 // Create WAV file

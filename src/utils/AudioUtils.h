@@ -1,9 +1,9 @@
+#ifndef AUDIO_UTILS_H
+#define AUDIO_UTILS_H
+
 #include "synth/Oscillator.h"
 #include <cstdint>
 #include <vector>
-
-#ifndef AUDIO_UTILS_H
-#define AUDIO_UTILS_H
 
 namespace AudioUtils {
 inline constexpr float DEFAULT_AMPLITUDE{0.5f};
