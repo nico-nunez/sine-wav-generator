@@ -47,10 +47,10 @@ private:
   float mDecayMs;
   float mReleaseMs;
 
-  // Num Sample Values (derived from time values) int
-  int mAttackSamples;
-  int mDecaySamples;
-  int mReleaseSamples;
+  // Increments per sample: 1.0f / numSamples (numSamples are derived from time)
+  float mAttackIncrement;
+  float mDecayIncrement;
+  float mReleaseIncrement;
 
   // Percentage as float (0.0 - 1.0)
   float mSustainLevel;
@@ -59,15 +59,15 @@ private:
 
   // Runtime State
   State mState = State::Idle;
-  int mSamplesInCurrentState = 0;
+  float mStateProgress = 0;
   float mReleaseStartLevel; // Current level when release stage begins
                             // usually same as sustain level but could be
                             // value in the middle of Attack or Decay stages
 
   // Helpers
   float getCurrentAmplitude() const;
-  int convertMsToSamples(float ms) const;
-  void updateSampleCounts(); // Recalculates all sample counts
+  float convertMsToIncrement(float ms) const;
+  void updateIncrements(); // Recalculates ADR increment values
 
   // Stage calculations
   float calculateAttack() const;

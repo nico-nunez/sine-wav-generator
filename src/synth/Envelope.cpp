@@ -15,7 +15,7 @@ void Envelope::setAttack(float ms) {
     throw std::runtime_error("Invalid Value: must be positive");
 
   mAttackMs = ms;
-  mAttackSamples = convertMsToSamples(ms);
+  mAttackIncrement = convertMsToIncrement(ms);
 }
 float Envelope::getAttack() const { return mAttackMs; }
 
@@ -25,7 +25,7 @@ void Envelope::setDecay(float ms) {
     throw std::runtime_error("Invalid Value: must be positive");
 
   mDecayMs = ms;
-  mDecaySamples = convertMsToSamples(ms);
+  mDecayIncrement = convertMsToIncrement(ms);
 }
 float Envelope::getDecay() const { return mDecayMs; }
 
@@ -43,7 +43,7 @@ void Envelope::setRelease(float ms) {
     throw std::runtime_error("Invalid Value: must be positive");
 
   mReleaseMs = ms;
-  mReleaseSamples = convertMsToSamples(ms);
+  mReleaseIncrement = convertMsToIncrement(ms);
 }
 float Envelope::getRelease() const { return mReleaseMs; }
 
@@ -53,20 +53,20 @@ void Envelope::setSampleRate(float sampleRate) {
     throw std::runtime_error("Invalid Value: must be positive");
 
   mSampleRate = sampleRate;
-  updateSampleCounts();
+  updateIncrements();
 }
 float Envelope::getSampleRate() const { return mSampleRate; }
 
 // Envelope Control Methods
 void Envelope::trigger() {
-  mSamplesInCurrentState = 0;
+  mStateProgress = 0;
   mState = State::Attack;
 }
 
 void Envelope::release() {
   mReleaseStartLevel = getCurrentAmplitude();
   mState = State::Release;
-  mSamplesInCurrentState = 0;
+  mStateProgress = 0;
 }
 
 float Envelope::getNextSample() {
@@ -76,21 +76,21 @@ float Envelope::getNextSample() {
 
   case State::Attack:
     amplitude = calculateAttack();
-    mSamplesInCurrentState++;
+    mStateProgress += mAttackIncrement;
 
-    if (mSamplesInCurrentState >= mAttackSamples) {
+    if (mStateProgress >= 1.0f) {
       mState = State::Decay;
-      mSamplesInCurrentState = 0;
+      mStateProgress = 0;
     }
     break;
 
   case State::Decay:
     amplitude = calculateDecay();
-    mSamplesInCurrentState++;
+    mStateProgress += mDecayIncrement;
 
-    if (mSamplesInCurrentState >= mDecaySamples) {
+    if (mStateProgress >= 1.0f) {
       mState = State::Sustain;
-      mSamplesInCurrentState = 0;
+      mStateProgress = 0;
     }
     break;
 
@@ -100,11 +100,11 @@ float Envelope::getNextSample() {
 
   case State::Release:
     amplitude = calculateRelease();
-    mSamplesInCurrentState++;
+    mStateProgress += mReleaseIncrement;
 
-    if (mSamplesInCurrentState >= mReleaseSamples) {
+    if (mStateProgress >= 1.0f) {
       mState = State::Idle;
-      mSamplesInCurrentState = 0;
+      mStateProgress = 0;
     }
     break;
 
@@ -136,11 +136,16 @@ float Envelope::getCurrentAmplitude() const {
   }
 }
 
-int Envelope::convertMsToSamples(float ms) const {
-  return static_cast<int>((ms / 1000.f) * mSampleRate);
+float Envelope::convertMsToIncrement(float ms) const {
+  float totalStateSamples = (ms / 1000.f) * mSampleRate;
+
+  if (totalStateSamples == 0)
+    return 0;
+
+  return 1.0f / totalStateSamples;
 }
 
-void Envelope::updateSampleCounts() {
+void Envelope::updateIncrements() {
   setAttack(mAttackMs);
   setDecay(mDecayMs);
   setRelease(mReleaseMs);
@@ -148,27 +153,24 @@ void Envelope::updateSampleCounts() {
 
 // Amplitude Calculations
 float Envelope::calculateAttack() const {
-  if (mAttackSamples == 0)
+  if (mAttackIncrement == 0)
     return 1.0f;
 
-  return (float)mSamplesInCurrentState / (float)mAttackSamples;
+  return mStateProgress;
 }
 
 float Envelope::calculateDecay() const {
-  if (mDecaySamples == 0)
+  if (mDecayIncrement == 0)
     return 1.0f;
 
-  float progress = (float)mSamplesInCurrentState / (float)mDecaySamples;
   float decayRange = 1.0f - mSustainLevel;
-  return 1.0f - (progress * decayRange);
+  return 1.0f - (mStateProgress * decayRange);
 }
 
 float Envelope::calculateRelease() const {
-  if (mReleaseSamples == 0)
+  if (mReleaseIncrement == 0)
     return 1.0f;
-
-  float progress = (float)mSamplesInCurrentState / (float)mReleaseSamples;
-  return mReleaseStartLevel * (1.0f - progress);
+  return mReleaseStartLevel * (1.0f - mStateProgress);
 }
 
 } // namespace Synth
