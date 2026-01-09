@@ -1,6 +1,7 @@
 #include "synth/Engine.h"
 #include "synth/Oscillator.h"
 #include "synth/Voice.h"
+
 #include <vector>
 
 namespace Synth {
@@ -20,11 +21,11 @@ void Engine::setOscillatorType(const OscillatorType oscType) {
   }
 }
 
-std::vector<float> Engine::process(const Sequence &sequence,
+std::vector<float> Engine::process(const NoteEventSequence &evtSequence,
                                    float stepDuration) {
 
   int samplesPerStep{static_cast<int>(stepDuration * mSampleRate)};
-  int totalSamples{samplesPerStep * static_cast<int>(sequence.size())};
+  int totalSamples{samplesPerStep * static_cast<int>(evtSequence.size())};
 
   std::vector<float> buffer{};
   buffer.reserve(static_cast<size_t>(totalSamples));
@@ -33,15 +34,15 @@ std::vector<float> Engine::process(const Sequence &sequence,
 
   int releaseSamples = static_cast<int>((releaseMs / 1000.0f) * mSampleRate);
 
-  // Note off needs to be adjusted (+1) due to 0 index
-  int noteOffSample = samplesPerStep - releaseSamples + 1;
+  int lastSampleIndex = samplesPerStep - 1; // adjust for 0 index
+  int noteOffSample = lastSampleIndex - releaseSamples;
 
   // Sequence of note(s)
-  for (const auto &noteGroup : sequence) {
+  for (const auto &noteEvtGroup : evtSequence) {
     int activeVoices{0};
 
     size_t voiceIndex{0};
-    for (auto &noteEvent : noteGroup) {
+    for (auto &noteEvent : noteEvtGroup) {
       if (voiceIndex < mVoices.size() && mVoices[voiceIndex].isAvailable()) {
         mVoices[voiceIndex].noteOn(noteEvent.frequency);
         ++voiceIndex;

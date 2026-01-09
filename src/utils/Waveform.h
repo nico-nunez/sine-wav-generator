@@ -4,6 +4,9 @@
 #include <cmath>
 
 namespace Waveforms {
+
+inline constexpr float TWO_PI = 2 * static_cast<float>(M_PI);
+
 using WaveformFunc = float (*)(float);
 
 float sine(float phase);

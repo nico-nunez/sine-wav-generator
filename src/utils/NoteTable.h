@@ -11,8 +11,10 @@ public:
   float getFrequency(int midiNote) const;
 
 private:
-  static constexpr int MIDI_NOTE_COUNT = 128;
-  static constexpr float A4_FREQUENCY = 440.0;
+  static constexpr int ROOT_MIDI{69};       // A4
+  static constexpr float ROOT_FREQ{440.0f}; // A4
+
+  static constexpr int MIDI_NOTE_COUNT{128};
 
   float mFreqquencyTable[MIDI_NOTE_COUNT];
 

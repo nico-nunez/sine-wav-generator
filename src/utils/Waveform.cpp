@@ -1,10 +1,8 @@
-#include "utils/Waveform.h"
+#include "Waveform.h"
 #include <cmath>
 #include <cstdlib>
 
 namespace Waveforms {
-
-constexpr float TWO_PI = 2 * static_cast<float>(M_PI);
 
 float sine(float phase) { return std::sin(phase * TWO_PI); }
 

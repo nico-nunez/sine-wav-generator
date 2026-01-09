@@ -2,11 +2,9 @@
 #include <stdexcept>
 
 namespace Synth {
-Envelope::Envelope(float sampleRate) : mSampleRate(sampleRate) {
-  setAttack(50.0f);
-  setDecay(100.0f);
-  setSustain(0.7f);
-  setRelease(200.0f);
+Envelope::Envelope(float sampleRate, Settings settings)
+    : mSampleRate(sampleRate), mSettings(settings) {
+  updateIncrements();
 }
 
 // Attack (Stage 1)
@@ -14,38 +12,38 @@ void Envelope::setAttack(float ms) {
   if (ms < 0)
     throw std::runtime_error("Invalid Value: must be positive");
 
-  mAttackMs = ms;
+  mSettings.attack = ms;
   mAttackIncrement = convertMsToIncrement(ms);
 }
-float Envelope::getAttack() const { return mAttackMs; }
+float Envelope::getAttack() const { return mSettings.attack; }
 
 // Decay (Stage 2)
 void Envelope::setDecay(float ms) {
   if (ms < 0)
     throw std::runtime_error("Invalid Value: must be positive");
 
-  mDecayMs = ms;
+  mSettings.decay = ms;
   mDecayIncrement = convertMsToIncrement(ms);
 }
-float Envelope::getDecay() const { return mDecayMs; }
+float Envelope::getDecay() const { return mSettings.decay; }
 
 // Sustain (Stage 3)
 void Envelope::setSustain(float value) {
   if (value < 0 || value > 1)
     throw std::runtime_error("Invalid Value: must be >=0.0 and <=1.0");
-  mSustainLevel = value;
+  mSettings.sustain = value;
 }
-float Envelope::getSustain() const { return mSustainLevel; }
+float Envelope::getSustain() const { return mSettings.sustain; }
 
 // Release (Stage 4)
 void Envelope::setRelease(float ms) {
   if (ms < 0)
     throw std::runtime_error("Invalid Value: must be positive");
 
-  mReleaseMs = ms;
+  mSettings.release = ms;
   mReleaseIncrement = convertMsToIncrement(ms);
 }
-float Envelope::getRelease() const { return mReleaseMs; }
+float Envelope::getRelease() const { return mSettings.release; }
 
 // Sample Rate
 void Envelope::setSampleRate(float sampleRate) {
@@ -95,7 +93,7 @@ float Envelope::process() {
     break;
 
   case State::Sustain:
-    amplitude = mSustainLevel;
+    amplitude = mSettings.sustain;
     break;
 
   case State::Release:
@@ -126,7 +124,7 @@ float Envelope::getCurrentAmplitude() const {
   case State::Decay:
     return calculateDecay();
   case State::Sustain:
-    return mSustainLevel;
+    return mSettings.sustain;
   case State::Release:
     return calculateRelease();
   case State::Idle:
@@ -146,9 +144,9 @@ float Envelope::convertMsToIncrement(float ms) const {
 }
 
 void Envelope::updateIncrements() {
-  setAttack(mAttackMs);
-  setDecay(mDecayMs);
-  setRelease(mReleaseMs);
+  setAttack(mSettings.attack);
+  setDecay(mSettings.decay);
+  setRelease(mSettings.release);
 }
 
 // Amplitude Calculations
@@ -163,7 +161,7 @@ float Envelope::calculateDecay() const {
   if (mDecayIncrement == 0)
     return 1.0f;
 
-  float decayRange = 1.0f - mSustainLevel;
+  float decayRange = 1.0f - mSettings.sustain;
   return 1.0f - (mStateProgress * decayRange);
 }
 

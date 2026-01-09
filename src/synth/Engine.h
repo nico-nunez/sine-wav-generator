@@ -3,16 +3,20 @@
 
 #include "synth/Oscillator.h"
 #include "synth/Voice.h"
+#include <string>
 #include <vector>
 
 namespace Synth {
 
 struct NoteEvent {
   float frequency;
+
+  NoteEvent(float freq) : frequency(freq) {}
 };
 
 using NoteEventGroup = std::vector<NoteEvent>;
-using Sequence = std::vector<NoteEventGroup>;
+using NoteEventSequence = std::vector<NoteEventGroup>;
+using NoteSequence = std::vector<std::vector<std::string>>;
 
 class Engine {
 public:
@@ -22,7 +26,8 @@ public:
   void setOscillatorType(const OscillatorType oscType);
   void getOscillatorType() const;
 
-  std::vector<float> process(const Sequence &sequence, float totalDuration);
+  std::vector<float> process(const NoteEventSequence &evtSequence,
+                             float totalDuration);
 
 private:
   int mMaxVoices{3};

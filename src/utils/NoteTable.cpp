@@ -1,4 +1,5 @@
 #include "NoteTable.h"
+
 #include <cmath>
 #include <stdexcept>
 #include <string>
@@ -18,7 +19,7 @@ float NoteTable::getFrequency(int midiNote) const {
 // Helper methods
 void NoteTable::generateNoteTable() {
   for (int i = 0; i < MIDI_NOTE_COUNT; i++) {
-    mFreqquencyTable[i] = A4_FREQUENCY * std::pow(2.0f, (i - 69) / 12.0f);
+    mFreqquencyTable[i] = ROOT_FREQ * std::pow(2.0f, (i - 69) / 12.0f);
   }
 }
 

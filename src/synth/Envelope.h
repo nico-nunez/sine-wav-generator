@@ -6,7 +6,27 @@
 namespace Synth {
 class Envelope {
 public:
-  Envelope(float sampleRate = Synth::DEFAULT_SAMPLE_RATE);
+  struct Settings {
+    float attack;  // milliseconds
+    float decay;   // milliseconds
+    float sustain; // percentage (0.0 - 1.0)
+    float release; // milliseconds
+
+    /*
+     * Constructor needs to be defined in order to use default values within
+     * Envelope constructor.  Default memember initialization values are NOT
+     * "available" until entire class has been parsed.
+     *
+     * Basically, without the constructor, the default (member) values aren't
+     * known to the compiler
+     */
+    Settings(float a = 50.0f, float d = 100.0f, float s = 0.7f,
+             float r = 200.0f)
+        : attack(a), decay(d), sustain(s), release(r) {}
+  };
+
+  Envelope(float sampleRate = Synth::DEFAULT_SAMPLE_RATE,
+           Settings settings = {});
 
   /*
    * ADSR Configuration:
@@ -42,20 +62,13 @@ public:
 private:
   enum class State { Idle, Attack, Decay, Sustain, Release };
 
-  // Time in milliseconds
-  float mAttackMs;
-  float mDecayMs;
-  float mReleaseMs;
+  float mSampleRate;
+  Settings mSettings;
 
   // Increments per sample: 1.0f / numSamples (numSamples are derived from time)
   float mAttackIncrement;
   float mDecayIncrement;
   float mReleaseIncrement;
-
-  // Percentage as float (0.0 - 1.0)
-  float mSustainLevel;
-
-  float mSampleRate;
 
   // Runtime State
   State mState = State::Idle;
