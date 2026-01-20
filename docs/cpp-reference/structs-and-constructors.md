@@ -1,5 +1,16 @@
 # Structs and Constructors in C++
 
+## Table of Contents
+- [struct vs class](#struct-vs-class)
+- [Convention](#convention)
+- [C++ Terminology](#c-terminology)
+- [Constructors](#constructors)
+- [Default Constructor](#default-constructor)
+- [Methods in Structs](#methods-in-structs)
+- [Rule of Zero/Five](#rule-of-zerofive)
+- [Common Gotchas](#common-gotchas)
+- [Quick Reference](#quick-reference)
+
 ## struct vs class
 
 **The only difference**: default access level
@@ -292,6 +303,273 @@ Oscillator osc(440.0f);
 osc.reset();
 float phase = osc.getCurrentPhase();
 ```
+
+## Rule of Zero/Five
+
+C++ has **five special member functions** that control how objects are created, copied, moved, and destroyed. Understanding when to use them is critical.
+
+### The Five Special Member Functions
+
+```cpp
+struct Example {
+    // 1. Destructor
+    ~Example() { /* cleanup */ }
+
+    // 2. Copy constructor
+    Example(const Example& other) { /* copy */ }
+
+    // 3. Copy assignment operator
+    Example& operator=(const Example& other) { /* copy assign */ return *this; }
+
+    // 4. Move constructor (C++11)
+    Example(Example&& other) noexcept { /* move */ }
+
+    // 5. Move assignment operator (C++11)
+    Example& operator=(Example&& other) noexcept { /* move assign */ return *this; }
+};
+```
+
+### Rule of Zero (Preferred)
+
+**Don't declare ANY of the five special member functions. Let the compiler generate them.**
+
+```cpp
+// Rule of Zero - Simple and correct
+struct Settings {
+    float attack;
+    float decay;
+    float sustain;
+    float release;
+
+    // No special member functions declared
+    // Compiler generates correct copy/move/destructor
+};
+
+Settings s1;
+Settings s2 = s1;       // Compiler-generated copy works perfectly
+Settings s3 = std::move(s1);  // Compiler-generated move works perfectly
+```
+
+**When to use Rule of Zero:**
+- ✅ Simple data structures (POD types)
+- ✅ All members have value semantics
+- ✅ No raw pointers, file handles, or other resources
+- ✅ **95% of the time** - this is the default choice
+
+**Why it works:** Modern C++ types (std::vector, std::unique_ptr, etc.) already handle their own copying/moving correctly. Compiler-generated functions do the right thing automatically.
+
+### Rule of Five (When You Need It)
+
+**If you declare ANY of the five, declare ALL five (or explicitly delete/default them).**
+
+```cpp
+// Rule of Five - Managing a resource
+class AudioBuffer {
+    float* mData;
+    size_t mSize;
+
+public:
+    // Constructor
+    AudioBuffer(size_t size) : mSize(size), mData(new float[size]) {}
+
+    // 1. Destructor - MUST clean up resource
+    ~AudioBuffer() {
+        delete[] mData;
+    }
+
+    // 2. Copy constructor - deep copy
+    AudioBuffer(const AudioBuffer& other)
+        : mSize(other.mSize)
+        , mData(new float[other.mSize])
+    {
+        std::copy(other.mData, other.mData + mSize, mData);
+    }
+
+    // 3. Copy assignment
+    AudioBuffer& operator=(const AudioBuffer& other) {
+        if (this != &other) {
+            delete[] mData;  // Clean up old resource
+            mSize = other.mSize;
+            mData = new float[mSize];
+            std::copy(other.mData, other.mData + mSize, mData);
+        }
+        return *this;
+    }
+
+    // 4. Move constructor - steal resource
+    AudioBuffer(AudioBuffer&& other) noexcept
+        : mSize(other.mSize)
+        , mData(other.mData)
+    {
+        other.mData = nullptr;  // Leave other in valid state
+        other.mSize = 0;
+    }
+
+    // 5. Move assignment
+    AudioBuffer& operator=(AudioBuffer&& other) noexcept {
+        if (this != &other) {
+            delete[] mData;  // Clean up old resource
+            mData = other.mData;
+            mSize = other.mSize;
+            other.mData = nullptr;  // Leave other in valid state
+            other.mSize = 0;
+        }
+        return *this;
+    }
+};
+```
+
+**When to use Rule of Five:**
+- You manage a **resource** (raw pointer, file handle, socket, etc.)
+- You need custom cleanup in the destructor
+- You need deep copies (copying pointed-to data, not just the pointer)
+
+**Better approach:** Use Rule of Zero by wrapping resources in RAII types:
+
+```cpp
+// Better - Rule of Zero with smart pointers
+class AudioBuffer {
+    std::unique_ptr<float[]> mData;
+    size_t mSize;
+
+public:
+    AudioBuffer(size_t size)
+        : mSize(size)
+        , mData(std::make_unique<float[]>(size))
+    {}
+
+    // No special member functions needed!
+    // unique_ptr handles everything correctly
+};
+```
+
+### Using `= default` and `= delete`
+
+Explicitly control which operations are available:
+
+```cpp
+struct NonCopyable {
+    int value;
+
+    NonCopyable() = default;
+
+    // Delete copy operations
+    NonCopyable(const NonCopyable&) = delete;
+    NonCopyable& operator=(const NonCopyable&) = delete;
+
+    // Keep move operations (compiler-generated)
+    NonCopyable(NonCopyable&&) = default;
+    NonCopyable& operator=(NonCopyable&&) = default;
+};
+
+NonCopyable a;
+NonCopyable b = a;           // ❌ Error - copying deleted
+NonCopyable c = std::move(a); // ✅ OK - moving allowed
+```
+
+**Use `= default` to document intent:**
+
+```cpp
+struct Settings {
+    float attack;
+    float decay;
+
+    // Explicitly say "yes, use compiler-generated versions"
+    Settings() = default;
+    Settings(const Settings&) = default;
+    Settings& operator=(const Settings&) = default;
+    Settings(Settings&&) noexcept = default;
+    Settings& operator=(Settings&&) noexcept = default;
+    ~Settings() = default;
+};
+```
+
+This shows you've **thought about** these operations (vs just not mentioning them).
+
+### Debugging: Instrumenting Copy/Move
+
+**Temporary technique** for learning - add print statements to see when copies/moves happen:
+
+```cpp
+struct Settings {
+    float attack, decay, sustain, release;
+
+    Settings() = default;
+
+    Settings(const Settings& other)
+        : attack(other.attack), decay(other.decay)
+        , sustain(other.sustain), release(other.release)
+    {
+        std::cout << "[Settings] COPIED\n";
+    }
+
+    Settings& operator=(const Settings& other) {
+        attack = other.attack;
+        decay = other.decay;
+        sustain = other.sustain;
+        release = other.release;
+        std::cout << "[Settings] COPY assigned\n";
+        return *this;
+    }
+
+    Settings(Settings&& other) noexcept
+        : attack(other.attack), decay(other.decay)
+        , sustain(other.sustain), release(other.release)
+    {
+        std::cout << "[Settings] MOVED\n";
+    }
+
+    Settings& operator=(Settings&& other) noexcept {
+        attack = other.attack;
+        decay = other.decay;
+        sustain = other.sustain;
+        release = other.release;
+        std::cout << "[Settings] MOVE assigned\n";
+        return *this;
+    }
+};
+```
+
+**After learning:** Delete all five functions and return to Rule of Zero.
+
+### The Deprecation Warning
+
+If you declare a copy constructor but **not** a copy assignment operator (or vice versa), you'll get a deprecation warning:
+
+```cpp
+struct Bad {
+    Bad(const Bad& other) { }  // Declared copy ctor
+    // Missing copy assignment operator!
+    // Compiler generates it, but warns it's deprecated
+};
+```
+
+**Fix:** Either delete the copy constructor (Rule of Zero) or add all five (Rule of Five).
+
+### Key Takeaways
+
+1. **Default to Rule of Zero** - let the compiler do the work
+2. **Only use Rule of Five** when managing resources directly
+3. **If you need Rule of Five, consider using RAII types instead** (unique_ptr, vector, etc.)
+4. **Never declare just some** of the five - it's all or nothing
+5. **Use `= delete`** to explicitly disable operations
+6. **Use `= default`** to document that you've thought about it
+
+### Quick Decision Tree
+
+```
+Do you manage a raw resource (new/delete, file handle, etc.)?
+├─ NO  → Rule of Zero (default behavior)
+└─ YES → Can you use unique_ptr/vector/RAII wrapper?
+         ├─ YES → Rule of Zero with RAII wrapper
+         └─ NO  → Rule of Five (declare all 5)
+```
+
+**Audio Development Context:**
+- Most audio DSP classes → Rule of Zero
+- Simple data structures (Settings, Parameters) → Rule of Zero
+- Buffer management → Use `std::vector` (Rule of Zero)
+- Resource handles (audio streams, file I/O) → RAII wrapper or Rule of Five
 
 ## Common Gotchas
 

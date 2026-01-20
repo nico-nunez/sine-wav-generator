@@ -2,6 +2,7 @@
 #define SYNTH_ENVELOPE_H
 
 #include "synth/Oscillator.h"
+#include <iostream>
 
 namespace Synth {
 class Envelope {
@@ -26,7 +27,7 @@ public:
   };
 
   Envelope(float sampleRate = Synth::DEFAULT_SAMPLE_RATE,
-           Settings settings = {});
+           const Settings &settings = {});
 
   /*
    * ADSR Configuration:

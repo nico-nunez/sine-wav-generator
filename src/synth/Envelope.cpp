@@ -2,7 +2,7 @@
 #include <stdexcept>
 
 namespace Synth {
-Envelope::Envelope(float sampleRate, Settings settings)
+Envelope::Envelope(float sampleRate, const Settings &settings)
     : mSampleRate(sampleRate), mSettings(settings) {
   updateIncrements();
 }

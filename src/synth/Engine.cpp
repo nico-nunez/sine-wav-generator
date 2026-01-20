@@ -2,6 +2,7 @@
 #include "synth/Oscillator.h"
 #include "synth/Voice.h"
 
+#include <iostream>
 #include <vector>
 
 namespace Synth {
@@ -10,7 +11,11 @@ constexpr float DEFAULT_AMPLITUDE{0.6f};
 
 Engine::Engine(const float sampleRate, const OscillatorType oscType)
     : mSampleRate(sampleRate), mOscillatorType(oscType) {
-  setupVoices();
+  // Set sample rate and oscillator types for all voices
+  for (auto &voice : mVoices) {
+    voice.setSampleRate(sampleRate);
+    voice.setOscillatorType(oscType);
+  }
 }
 
 void Engine::setOscillatorType(const OscillatorType oscType) {
@@ -78,17 +83,12 @@ std::vector<float> Engine::process(const NoteEventSequence &evtSequence,
 }
 
 // Helper methods
-void Engine::setupVoices() {
-  for (int i = 0; i < MAX_VOICES; ++i) {
-    mVoices.push_back(Voice(mOscillatorType, mSampleRate));
-  }
-}
-
-void Engine::updateMaxReleaseTime() {
-  float maxRelease{};
-
-  for (const auto &voice : mVoices) {
-  }
-}
+// `void Engine::updateMaxReleaseTime() {
+// `  float maxRelease{};
+// `
+// `  for (const auto &voice : mVoices) {
+// `    // TODO
+// `  }
+// `}
 
 } // namespace Synth

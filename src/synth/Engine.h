@@ -3,6 +3,7 @@
 
 #include "synth/Oscillator.h"
 #include "synth/Voice.h"
+#include <array>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,7 @@ using NoteSequence = std::vector<std::vector<std::string>>;
 
 class Engine {
 public:
-  static const int MAX_VOICES{3};
+  static constexpr int MAX_VOICES{10};
 
   Engine(const float sampleRate = DEFAULT_SAMPLE_RATE,
          const OscillatorType oscType = OscillatorType::Sine);
@@ -34,12 +35,10 @@ public:
 private:
   float mSampleRate;
 
-  OscillatorType mOscillatorType;
-  std::vector<Voice> mVoices{};
+  OscillatorType mOscillatorType{};
+  std::array<Voice, MAX_VOICES> mVoices;
 
   float maxReleaseTime{};
-
-  void setupVoices();
 
   void updateMaxReleaseTime();
 };
