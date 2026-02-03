@@ -7,12 +7,12 @@ namespace audio_io {
 
 using AudioCallback = void (*)(AudioBuffer buffer, void *context);
 
-audio_io::hAudioSession setupSession(const audio_io::Config &userConfig,
-                                     audio_io::AudioCallback userCallback,
-                                     void *userContext);
+audio_io::hAudioSession setupAudioSession(const audio_io::Config &userConfig,
+                                          audio_io::AudioCallback userCallback,
+                                          void *userContext);
 
-PLATFORM_START(startAudio);
-PLATFORM_STOP(stopAudio);
-PLATFORM_CLEANUP(cleanupAudio);
+PLATFORM_START(startAudioSession);
+PLATFORM_STOP(stopAudioSession);
+PLATFORM_CLEANUP(cleanupAudioSession);
 
 } // namespace audio_io

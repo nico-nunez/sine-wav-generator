@@ -10,8 +10,8 @@
 
 namespace audio_io {
 
-hAudioSession setupAudio(const Config &userConfig, AudioCallback userCallback,
-                         void *userContext) {
+hAudioSession setupAudioSession(const Config &userConfig,
+                                AudioCallback userCallback, void *userContext) {
 
   // Create a new AudioSession
   hAudioSession sessionPtr = new AudioSession();
@@ -63,7 +63,7 @@ hAudioSession setupAudio(const Config &userConfig, AudioCallback userCallback,
   return sessionPtr;
 }
 
-int startAudio(hAudioSession sessionPtr) {
+int startAudioSession(hAudioSession sessionPtr) {
   int errCode = CoreAudioAdapter::coreAudioStart(sessionPtr);
   if (errCode) {
     printf("Platform audio start failed: %d", errCode);
@@ -72,7 +72,7 @@ int startAudio(hAudioSession sessionPtr) {
   return 0;
 }
 
-int stopAudio(hAudioSession sessionPtr) {
+int stopAudioSession(hAudioSession sessionPtr) {
   int errCode = CoreAudioAdapter::coreAudioStop(sessionPtr);
   if (errCode) {
     printf("Platform audio stop failed: %d", errCode);
@@ -81,7 +81,7 @@ int stopAudio(hAudioSession sessionPtr) {
   return 0;
 }
 
-int cleanupAudio(hAudioSession sessionPtr) {
+int cleanupAudioSession(hAudioSession sessionPtr) {
   int errCode = CoreAudioAdapter::coreAudioCleanup(sessionPtr);
   if (errCode) {
     printf("Platform cleanup failed: %d", errCode);
@@ -89,9 +89,9 @@ int cleanupAudio(hAudioSession sessionPtr) {
   }
 
   if (sessionPtr->buffer.format == BufferFormat::NonInterleaved)
-    delete[] sessionPtr->bufferMemory;
+    delete[] sessionPtr->buffer.channelPtrs;
 
-  delete[] sessionPtr->buffer.channelPtrs;
+  delete[] sessionPtr->bufferMemory;
   delete sessionPtr;
   return 0;
 }
