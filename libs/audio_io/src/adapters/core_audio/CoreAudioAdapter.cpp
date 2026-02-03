@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <cstdio>
 
 namespace CoreAudioAdapter {
 
@@ -115,12 +116,10 @@ AudioStreamBasicDescription configToASBD(const audio_io::Config &config) {
  * to setup and initialize Core Audio compatability and
  * will be called by AudioSession.
  *
- * TODO(nico): handle/set return errors better and
- * refactor
- *
- * TODO(nico): should any of acDesc be part of user config?
- *
- * TODO(much-later): add input compatability
+ * TODO(nico): AudioComponentDescription should be user config
+ * TODO(nico): AudioObjectGetPropertyData w\ kAudioHardwarePropertyDevices
+ * TODO(much-later): handle config incompatability
+ * TODO(much-later): error handling in general
  */
 int coreAudioSetup(audio_io::hAudioSession sessionPtr) {
   // 1. Set audio component description values
@@ -154,8 +153,6 @@ int coreAudioSetup(audio_io::hAudioSession sessionPtr) {
 
   // IMPORTANT(nico-nunez):  MUST DISPOSE __audioUnit__ ON ERROR!!!!
 
-  // TODO(nico-nunez): 2b - Query hardware first.
-
   // 4. Configure stream format
   AudioStreamBasicDescription streamDescription{
       configToASBD(sessionPtr->userConfig)};
@@ -176,8 +173,7 @@ int coreAudioSetup(audio_io::hAudioSession sessionPtr) {
 
   sessionPtr->platformContext = platformContext;
 
-  // WARNING(nico-nunez):  Must dispose of adapterCtx, on error, beyond
-  // this point!!!
+  // IMPORTANT(nico-nunez):  MUST DISPOSE of __platformContext__ ON ERROR
 
   // 5. Set render callback
   AURenderCallbackStruct callbackStruct{};
@@ -214,25 +210,42 @@ int coreAudioSetup(audio_io::hAudioSession sessionPtr) {
 // ============ (Core Audio Methods) ============
 int coreAudioStart(audio_io::hAudioSession sessionPtr) {
   auto *ctx = static_cast<CoreAudioContext *>(sessionPtr->platformContext);
-  if (!ctx)
+  if (!ctx) {
+    printf("Unable to [start] AudioSession");
     return 1; // TODO(nico-nunez): return better error
+  }
   return AudioOutputUnitStart(ctx->audioUnit);
 }
 
 int coreAudioStop(audio_io::hAudioSession sessionPtr) {
   auto *ctx = static_cast<CoreAudioContext *>(sessionPtr->platformContext);
-  if (!ctx)
+  if (!ctx) {
+    printf("Unable to [stop] AudioSession");
     return 1; // TODO(nico-nunez): return better error
+  }
   return AudioOutputUnitStop(ctx->audioUnit);
 }
 
 int coreAudioCleanup(audio_io::hAudioSession sessionPtr) {
   auto *ctx = static_cast<CoreAudioContext *>(sessionPtr->platformContext);
-  if (ctx) {
-    AudioUnitUninitialize(ctx->audioUnit);
-    AudioComponentInstanceDispose(ctx->audioUnit);
-    delete ctx;
+  if (!ctx) {
+    printf("Platform context does not exit [cleanup]");
+    return 1; // TODO(nico-nunez): return better error
   }
+
+  OSStatus unInitErr = AudioUnitUninitialize(ctx->audioUnit);
+  if (unInitErr) {
+    printf("Unable to uninitialize AudioUnit [cleanup]");
+    return unInitErr;
+  }
+
+  OSStatus disposeErr = AudioComponentInstanceDispose(ctx->audioUnit);
+  if (disposeErr) {
+    printf("Unable to dispose of AudioUnit Instance [cleanup]");
+    return disposeErr;
+  }
+
+  delete ctx;
   return 0;
 }
 
