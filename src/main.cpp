@@ -3,7 +3,7 @@
 // #include "utils/WavWriter.h"
 
 #include <atomic>
-#include <audio_io/include/audio_io/AudioIO.h>
+#include <audio_io/AudioIO.h>
 #include <chrono>
 #include <csignal>
 #include <thread>

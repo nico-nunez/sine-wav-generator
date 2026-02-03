@@ -1,7 +1,7 @@
 #pragma once
 
-#include "audio_io/include/audio_io/AudioIOTypesFwd.h"
-#include "audio_io/src/AudioIOMacros.h"
+#include "audio_io/AudioIOMacros.h"
+#include "audio_io/AudioIOTypesFwd.h"
 
 #include <AudioToolbox/AudioToolbox.h>
 #include <cstdint>

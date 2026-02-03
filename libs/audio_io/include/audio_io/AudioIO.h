@@ -1,7 +1,8 @@
 #pragma once
 
+#include "AudioIOMacros.h"
 #include "AudioIOTypes.h"
-#include "audio_io/src/AudioIOMacros.h"
+#include "AudioIOTypesFwd.h"
 
 namespace audio_io {
 

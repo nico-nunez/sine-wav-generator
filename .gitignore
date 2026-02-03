@@ -33,7 +33,7 @@ out/
 *.swp
 *.swo
 *~
-.clangd/
+.clangd
 compile_commands.json
 
 # CMake (when you eventually use it)

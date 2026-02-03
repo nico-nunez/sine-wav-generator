@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 namespace audio_io {
 // --- Shared Types ---
 struct Config;

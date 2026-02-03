@@ -1,5 +1,5 @@
-#include "audio_io/include/audio_io/AudioIO.h"
-#include "audio_io/include/audio_io/AudioIOTypes.h"
+#include "audio_io/AudioIO.h"
+#include "audio_io/AudioIOTypes.h"
 
 namespace audio_io {
 struct AudioSession {

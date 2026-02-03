@@ -7,7 +7,7 @@ TARGET = main
 SOURCES = $(shell find src -name '*.cpp') $(shell find libs/audio_io/src -name '*.cpp')
 
 # Add src/ to include search path
-INCLUDES = -Isrc -Ilibs
+INCLUDES = -Isrc -Ilibs/audio_io/include -Ilibs/audio_io/src 
 
 LDFLAGS = -framework CoreAudio -framework AudioToolbox
 

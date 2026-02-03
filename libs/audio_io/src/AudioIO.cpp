@@ -1,7 +1,8 @@
-#include "audio_io/include/audio_io/AudioIO.h"
-#include "audio_io/include/audio_io/AudioIOTypes.h"
-#include "audio_io/src/adapters/core_audio/CoreAudioAdapter.h"
-#include "audio_io/src/shared/AudioSession.h"
+#include "audio_io/AudioIO.h"
+#include "adapters/core_audio/CoreAudioAdapter.h"
+#include "audio_io/AudioIOTypes.h"
+#include "shared/AudioSession.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>

@@ -2,7 +2,6 @@
 #define SYNTH_OSCILLATOR_H
 
 #include "synth/Waveform.h"
-#include <vector>
 
 namespace Synth {
 constexpr float DEFAULT_SAMPLE_RATE = 44100.0f;

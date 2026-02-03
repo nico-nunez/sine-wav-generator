@@ -1,0 +1,12 @@
+-std=c++17
+-Isrc
+-Ilibs/audio_io/src
+-Ilibs/audio_io/include
+-Wall
+-Weffc++
+-Wextra
+-Werror
+-pedantic-errors
+-Wconversion
+-Wsign-conversion
+-ggdb
