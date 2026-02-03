@@ -7,7 +7,7 @@ TARGET = main
 SOURCES = $(shell find src -name '*.cpp')
 
 # Add src/ to include search path
-INCLUDES = -Isrc
+INCLUDES = -Isrc -Ilibs/audio_io/include
 
 debug: CXXFLAGS = $(DEBUG_FLAGS)
 debug: $(TARGET)

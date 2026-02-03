@@ -3,7 +3,7 @@
 
 #include "synth/Engine.h"
 #include "synth/Oscillator.h"
-#include "utils/Waveform.h"
+#include "synth/Waveform.h"
 
 #include <string>
 #include <vector>

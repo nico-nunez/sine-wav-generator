@@ -1,7 +1,7 @@
 #ifndef SYNTH_OSCILLATOR_H
 #define SYNTH_OSCILLATOR_H
 
-#include "utils/Waveform.h"
+#include "synth/Waveform.h"
 #include <vector>
 
 namespace Synth {

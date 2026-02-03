@@ -1,5 +1,5 @@
 #include "Oscillator.h"
-#include "utils/Waveform.h"
+#include "synth/Waveform.h"
 
 namespace Synth {
 

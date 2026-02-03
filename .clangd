@@ -1,2 +1,4 @@
 CompileFlags:
-  Add: [-I/Users/nico/dev/sine-wav-generator/src]
+  Add: 
+    - -I/Users/nico/dev/sine-wav-generator/src
+    - -I/Users/nico/dev/sine-wav-generator/libs

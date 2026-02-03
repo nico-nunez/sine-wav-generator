@@ -2,7 +2,6 @@
 #include "synth/Oscillator.h"
 #include "synth/Voice.h"
 
-#include <iostream>
 #include <vector>
 
 namespace Synth {

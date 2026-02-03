@@ -50,4 +50,4 @@ cmake_install.cmake
 *.pdb
 
 # Misc
-docs/misc
+_docs_

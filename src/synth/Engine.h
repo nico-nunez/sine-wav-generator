@@ -32,6 +32,9 @@ public:
   std::vector<float> process(const NoteEventSequence &evtSequence,
                              float totalDuration);
 
+  // Temp
+  void processBlock(float *outputBuffer, u_int32_t inNumberFrames);
+
 private:
   float mSampleRate;
 
