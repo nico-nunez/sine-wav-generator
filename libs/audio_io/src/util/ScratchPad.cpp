@@ -1,4 +1,5 @@
-#include <cstdint>
+/*
+ * #include <cstdint>
 #include <cstdlib>
 
 namespace scratch_pad {
@@ -51,3 +52,4 @@ public:
 };
 
 } // namespace scratch_pad
+*/

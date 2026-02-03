@@ -22,8 +22,8 @@ struct CoreAudioContext {
  */
 static OSStatus
 nativeCallback(void *inRefCon, // ← CoreAudio gives us back what we registered
-               AudioUnitRenderActionFlags *ioActionFlags,
-               const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber,
+               AudioUnitRenderActionFlags * /*ioActionFlags*/,
+               const AudioTimeStamp * /*inTimeStamp*/, UInt32 /*inBusNumber*/,
                UInt32 inNumberFrames, AudioBufferList *ioData) {
 
   auto sessionPtr = static_cast<audio_io::hAudioSession>(inRefCon);
