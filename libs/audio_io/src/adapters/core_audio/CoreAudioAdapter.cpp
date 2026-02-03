@@ -3,6 +3,7 @@
 #include "audio_io/src/shared/AudioSession.h"
 
 #include <AudioToolbox/AudioToolbox.h>
+#include <cassert>
 #include <cstddef>
 
 namespace CoreAudioAdapter {
@@ -15,6 +16,9 @@ struct CoreAudioContext {
 /* ============ (Core Audio Native Callback) ============
  * This is the function signature required by Core Audio
  * Library and user logic needs to occur in here
+ *
+ * TODO(nico): Figure out way to pass native buffer if buffer.format
+ * matches native.  Avoids copy altogether
  */
 static OSStatus
 nativeCallback(void *inRefCon, // ← CoreAudio gives us back what we registered
@@ -24,14 +28,17 @@ nativeCallback(void *inRefCon, // ← CoreAudio gives us back what we registered
 
   auto sessionPtr = static_cast<audio_io::hAudioSession>(inRefCon);
 
-/* NOTE(nico): ioData->mNumberBuffers value should match the number of buffer
- * pointers within AudioBuffer. These are determined during config/setup and
- * SHOULD NOT change.
- *
- * Non-Interleaved = mNumberBuffers == number of channelPtrs (aka numChannels)
- * Interleaved: mNumberBuffers == interleavedPtr (aka 1)
- */
+  /* NOTE(nico): ioData->mNumberBuffers value should match the number of buffer
+   * pointers within AudioBuffer. These are determined during config/setup and
+   * SHOULD NOT change.
+   *
+   * Non-Interleaved = mNumberBuffers == number of channelPtrs (aka numChannels)
+   * Interleaved: mNumberBuffers == interleavedPtr (aka 1)
+   */
+
 #ifndef NDEBUG
+  assert(sessionPtr->buffer.numFrames == inNumberFrames);
+
   if (sessionPtr->buffer.format == audio_io::BufferFormat::NonInterleaved) {
     assert(ioData->mNumberBuffers == sessionPtr->buffer.numChannels);
   } else {
@@ -41,12 +48,41 @@ nativeCallback(void *inRefCon, // ← CoreAudio gives us back what we registered
 
   sessionPtr->userCallback(sessionPtr->buffer, sessionPtr->userContext);
 
-  /* TODO(nico): Copy and convert(Interleave <-> Non-Interleaved if needed) to
-   * Core Audio's buffer
-   *
-   * TODO(nico): Figure out way to pass native buffer if buffer.format
-   * matches native.  Avoids copy altogether
+  /* Copy (and convert if required) bufferMemory to Core Audio's buffer
+   * NOTE: _src_ is user configurable but _dst_ is not at this time
    */
+  if (sessionPtr->buffer.format == audio_io::BufferFormat::NonInterleaved) {
+    // Non-Interleaved (src) -> Non-Interleaved (dst)
+    assert(sessionPtr->buffer.channelPtrs);
+
+    for (size_t ch = 0; ch < sessionPtr->buffer.numChannels; ch++) {
+      float *dstPtr = static_cast<float *>(ioData->mBuffers[ch].mData);
+      float *srcPtr = sessionPtr->buffer.channelPtrs[ch];
+
+      assert(dstPtr);
+
+      for (size_t i = 0; i < sessionPtr->buffer.numFrames; i++)
+        dstPtr[i] = srcPtr[i];
+    }
+  } else {
+    // Interleaved (src) -> Non-Interleaved (dst)
+    assert(sessionPtr->buffer.interleavedPtr);
+
+    size_t stride = sessionPtr->buffer.numChannels;
+
+    for (size_t ch = 0; ch < sessionPtr->buffer.numChannels; ch++) {
+      float *dstPtr = static_cast<float *>(ioData->mBuffers[ch].mData);
+      float *srcPtr = sessionPtr->buffer.interleavedPtr + ch;
+
+      assert(dstPtr);
+
+      // Fill channel
+      for (size_t i = 0; i < sessionPtr->buffer.numFrames; i++) {
+        dstPtr[i] = srcPtr[i * stride];
+      }
+    }
+  }
+
   return noErr;
 }
 
