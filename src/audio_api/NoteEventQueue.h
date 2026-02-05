@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdio>
 
-namespace utils {
+namespace audio_api {
 enum class NoteEventType { NoteOff, NoteOn };
 
 struct NoteEvent {
@@ -65,4 +65,4 @@ struct NoteEventQueue {
   }
 };
 
-} // namespace utils
+} // namespace audio_api

@@ -1,9 +1,9 @@
 #ifndef SYNTH_VOICE_H
 #define SYNTH_VOICE_H
 
+#include "audio_api/NoteEventQueue.h"
 #include "synth/Envelope.h"
 #include "synth/Oscillator.h"
-#include "utils/NoteEventQueue.h"
 
 namespace Synth {
 struct NoteEvent;
@@ -13,7 +13,7 @@ public:
   Voice(OscillatorType oscType = OscillatorType::Sine,
         float sampleRate = DEFAULT_SAMPLE_RATE);
 
-  void noteOn(const utils::NoteEvent &event);
+  void noteOn(const audio_api::NoteEvent &event);
   void noteOff();
 
   float process();

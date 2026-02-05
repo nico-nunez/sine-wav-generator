@@ -1,16 +1,15 @@
 #include "RawTerminal.h"
-#include "utils/NoteEventQueue.h"
+#include "NoteEventQueue.h"
 
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
 
-namespace utils {
+namespace audio_api {
 static struct termios orig_termios;
 
 void enableRawTerminal() {
@@ -27,7 +26,7 @@ void enableRawTerminal() {
 
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 
-  printf("Raw mode enabled. Type anything (Ctrl+C to quit):\r\n");
+  printf("Raw mode enabled. Type anything ('q' to quit):\r\n");
 }
 
 void disableRawTerminal() {
@@ -35,25 +34,20 @@ void disableRawTerminal() {
 }
 
 void captureKeyboardInputs(NoteEventQueue &eventQueue) {
+  bool running = true;
   char c;
-  while (1) {
+
+  while (running) {
     c = '\0';
     if (read(STDIN_FILENO, &c, 1) == 1) {
-      if (iscntrl(c)) {
-        printf("%d\r\n", c); // Print ASCII code for control keys
+      if (c == 'Q' || c == 'q') {
+        disableRawTerminal();
+        running = false;
+        printf("Raw mode disable\r\n");
       } else {
-        if (c == 'Q') {
-          disableRawTerminal();
-          printf("Raw mode disable\r\n");
-          break;
-        } else {
-          uint8_t midiNote{asciiToMidi(c)};
-          if (midiNote) {
-            eventQueue.push(
-                utils::NoteEvent{utils::NoteEventType::NoteOn, midiNote, 100});
-            printf("NoteEvent added to queue: '%c' - MIDI: %d\r\n", c,
-                   midiNote);
-          }
+        uint8_t midiNote{asciiToMidi(c)};
+        if (midiNote) {
+          eventQueue.push(NoteEvent{NoteEventType::NoteOn, midiNote, 100});
         }
       }
     }
@@ -136,4 +130,4 @@ uint8_t asciiToMidi(char key) {
   return midiKey + (octiveOffset * SEMITONES);
 }
 
-} // namespace utils
+} // namespace audio_api

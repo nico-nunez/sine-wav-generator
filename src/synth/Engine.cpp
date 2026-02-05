@@ -1,12 +1,11 @@
 #include "synth/Engine.h"
+#include "audio_api/NoteEventQueue.h"
 #include "synth/Oscillator.h"
 #include "synth/Voice.h"
-#include "utils/NoteEventQueue.h"
 
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <vector>
 
 namespace Synth {
 // Set to 0.6 instead of 1.0 for additional headroom to avoid clipping
@@ -29,7 +28,7 @@ void Engine::setOscillatorType(const OscillatorType oscType) {
   }
 }
 
-void Engine::processEvent(const utils::NoteEvent &event) {
+void Engine::processEvent(const audio_api::NoteEvent &event) {
   bool processed = false;
 
   // Turn off any/all activeVoices
@@ -66,70 +65,5 @@ void Engine::processBlock(float **outputBuffer, size_t numChannels,
     }
   }
 }
-
-std::vector<float> Engine::process(const NoteEventSequence &evtSequence,
-                                   float stepDuration) {
-
-  int samplesPerStep{static_cast<int>(stepDuration * mSampleRate)};
-  int totalSamples{samplesPerStep * static_cast<int>(evtSequence.size())};
-
-  std::vector<float> buffer{};
-  buffer.reserve(static_cast<size_t>(totalSamples));
-
-  float releaseMs = 200.0f; // hardcoded for now.  will be dynamic later
-
-  int releaseSamples = static_cast<int>((releaseMs / 1000.0f) * mSampleRate);
-
-  int lastSampleIndex = samplesPerStep - 1; // adjust for 0 index
-  int noteOffSample = lastSampleIndex - releaseSamples;
-
-  // Sequence of note(s)
-  for (const auto &noteEvtGroup : evtSequence) {
-    int activeVoices{0};
-
-    size_t voiceIndex{0};
-    for (auto &noteEvent : noteEvtGroup) {
-      if (voiceIndex < mVoices.size() && mVoices[voiceIndex].isAvailable()) {
-        mVoices[voiceIndex].noteOn(noteEvent);
-        ++voiceIndex;
-        ++activeVoices;
-      }
-    }
-
-    // Render per sample note(s) values
-    for (int i = 0; i < samplesPerStep; ++i) {
-      float sampleValue{0.0f}; // amplitude (0.0 - 1.0)
-
-      if (i == noteOffSample) {
-        for (auto &voice : mVoices) {
-          // Only "turn off" active voices
-          if (!voice.isAvailable())
-            voice.noteOff();
-        }
-      }
-
-      // Share overall gain across each voice to avoid clipping
-      const float gainPerVoice =
-          DEFAULT_AMPLITUDE / static_cast<float>(activeVoices);
-
-      for (auto &voice : mVoices) {
-        sampleValue += voice.process() * gainPerVoice;
-      }
-
-      buffer.push_back(sampleValue);
-    }
-  }
-
-  return buffer;
-}
-
-// Helper methods
-// `void Engine::updateMaxReleaseTime() {
-// `  float maxRelease{};
-// `
-// `  for (const auto &voice : mVoices) {
-// `    // TODO
-// `  }
-// `}
 
 } // namespace Synth

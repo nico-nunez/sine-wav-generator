@@ -1,13 +1,13 @@
 #include "Voice.h"
 #include "Oscillator.h"
-#include "utils/NoteEventQueue.h"
+#include "audio_api/NoteEventQueue.h"
 #include "utils/SynthUtils.h"
 
 namespace Synth {
 Voice::Voice(OscillatorType oscType, float sampleRate)
     : mOscillator(oscType, sampleRate), mEnvelope(sampleRate) {}
 
-void Voice::noteOn(const utils::NoteEvent &event) {
+void Voice::noteOn(const audio_api::NoteEvent &event) {
   mOscillator.setFrequency(SynthUtils::midiToFrequency(event.note));
   mIsActive = true;
 
