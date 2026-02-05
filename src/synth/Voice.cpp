@@ -30,6 +30,7 @@ float Voice::process() {
 }
 
 bool Voice::isAvailable() const { return !mIsActive; }
+bool Voice::isReleasing() const { return mEnvelope.isReleasing(); }
 
 void Voice::setOscillatorType(OscillatorType oscType) {
   mOscillator.setOscillatorType(oscType);

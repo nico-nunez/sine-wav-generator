@@ -24,8 +24,10 @@ public:
   void setOscillatorType(const OscillatorType oscType);
   void getOscillatorType() const;
 
+  void processEvent(const utils::NoteEvent &event);
+
   // TODO(nico): Implement this!!!
-  void processBlock(float *outputBuffer, size_t numFrames);
+  void processBlock(float **outputBuffer, size_t numChannels, size_t numFrames);
 
   // TODO(nico): Remove this once processBlock is implemented
   std::vector<float> process(const NoteEventSequence &evtSequence,

@@ -48,9 +48,12 @@ void captureKeyboardInputs(NoteEventQueue &eventQueue) {
           break;
         } else {
           uint8_t midiNote{asciiToMidi(c)};
-          eventQueue.push(
-              utils::NoteEvent{utils::NoteEventType::NoteOn, midiNote, 100});
-          printf("NoteEvent added to queue: '%c' - MIDI: %d\r\n", c, midiNote);
+          if (midiNote) {
+            eventQueue.push(
+                utils::NoteEvent{utils::NoteEventType::NoteOn, midiNote, 100});
+            printf("NoteEvent added to queue: '%c' - MIDI: %d\r\n", c,
+                   midiNote);
+          }
         }
       }
     }

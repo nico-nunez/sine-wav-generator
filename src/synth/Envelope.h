@@ -2,7 +2,6 @@
 #define SYNTH_ENVELOPE_H
 
 #include "synth/Oscillator.h"
-#include <iostream>
 
 namespace Synth {
 class Envelope {
@@ -55,10 +54,11 @@ public:
   float getSampleRate() const;
 
   // Envelope Control
-  void noteOn();           // Start attack stage (start envelope)
-  void noteOff();          // Start release stage (finish envelope)
-  float process();         // Get current amplitude (0.0 - 1.0)
-  bool isComplete() const; // Has envelope stages completed
+  void noteOn();            // Start attack stage (start envelope)
+  void noteOff();           // Start release stage (finish envelope)
+  float process();          // Get current amplitude (0.0 - 1.0)
+  bool isComplete() const;  // Has envelope stages completed
+  bool isReleasing() const; // Has envelope stages completed
 
 private:
   enum class State { Idle, Attack, Decay, Sustain, Release };

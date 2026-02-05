@@ -115,6 +115,7 @@ float Envelope::process() {
 }
 
 bool Envelope::isComplete() const { return mState == State::Idle; }
+bool Envelope::isReleasing() const { return mState == State::Release; }
 
 // Helper Methods
 float Envelope::getCurrentAmplitude() const {

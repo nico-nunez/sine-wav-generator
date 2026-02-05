@@ -19,6 +19,7 @@ public:
   float process();
 
   bool isAvailable() const;
+  bool isReleasing() const;
 
   void setOscillatorType(OscillatorType oscType);
   void setSampleRate(float sampleRate);
