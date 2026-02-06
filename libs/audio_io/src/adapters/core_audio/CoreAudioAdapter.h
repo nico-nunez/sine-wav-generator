@@ -4,7 +4,6 @@
 #include "audio_io/AudioIOTypesFwd.h"
 
 #include <AudioToolbox/AudioToolbox.h>
-#include <cstdint>
 
 namespace CoreAudioAdapter {
 

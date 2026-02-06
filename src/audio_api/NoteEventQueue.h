@@ -57,10 +57,13 @@ struct NoteEventQueue {
   }
 
   void printQueue() {
+    size_t currentIndex = readIndex.load();
+    size_t endIndex = writeIndex.load();
+
+    // Only print events that are able to be read
     printf("======== Event Queue ========\n");
-    for (auto &event : queue) {
-      if (event.note)
-        printEvent(event);
+    for (; currentIndex < endIndex; currentIndex++) {
+      printEvent(queue[currentIndex]);
     }
   }
 };

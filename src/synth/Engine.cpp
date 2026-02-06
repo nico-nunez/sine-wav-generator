@@ -29,6 +29,9 @@ void Engine::setOscillatorType(const OscillatorType oscType) {
 }
 
 void Engine::processEvent(const audio_api::NoteEvent &event) {
+  if (!event.note)
+    return;
+
   bool processed = false;
 
   // Turn off any/all activeVoices

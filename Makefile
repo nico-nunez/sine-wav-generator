@@ -9,7 +9,7 @@ SOURCES = $(shell find src -name '*.cpp') $(shell find libs/audio_io/src -name '
 # Add src/ to include search path
 INCLUDES = -Isrc -Ilibs/audio_io/include -Ilibs/audio_io/src 
 
-LDFLAGS = -framework CoreAudio -framework AudioToolbox
+LDFLAGS = -framework CoreAudio -framework AudioToolbox -framework ApplicationServices
 
 debug: CXXFLAGS = $(DEBUG_FLAGS)
 debug: $(TARGET)

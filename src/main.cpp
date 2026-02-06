@@ -1,53 +1,31 @@
+#include "audio_api/AudioProcessor.h"
 #include "audio_api/NoteEventQueue.h"
-#include "audio_api/RawTerminal.h"
 #include "synth/Engine.h"
 
 #include <audio_io/AudioIO.h>
 #include <csignal>
 
-// Test state
-struct PlaybackContext {
-  audio_api::NoteEventQueue *eventQueue;
-  Synth::Engine *engine;
-};
+static void processEvent(audio_api::NoteEvent event, void *myContext) {
+  auto engine = static_cast<Synth::Engine *>(myContext);
+  engine->processEvent(event);
+}
 
-void audioCallback(audio_io::AudioBuffer buffer, void *context) {
-  auto *ctx = static_cast<PlaybackContext *>(context);
-
-  audio_api::NoteEvent event;
-  while (ctx->eventQueue->pop(event)) {
-    ctx->engine->processEvent(event);
-  }
-
-  ctx->engine->processBlock(buffer.channelPtrs, buffer.numChannels,
-                            buffer.numFrames);
+static void processBlock(float **outputBuffer, size_t numChannels,
+                         size_t numFrames, void *myContext) {
+  auto engine = static_cast<Synth::Engine *>(myContext);
+  engine->processBlock(outputBuffer, numChannels, numFrames);
 }
 
 int main() {
-  audio_api::NoteEventQueue eventQueue{};
-
   constexpr float SAMPLE_RATE = 48000.0f;
 
+  // 1. Setup synth engine
   Synth::Engine engine{SAMPLE_RATE, Synth::OscillatorType::Square};
 
-  PlaybackContext audioContext;
-  audioContext.engine = &engine;
-  audioContext.eventQueue = &eventQueue;
-
   // 2. Setup audio_io
-  audio_io::Config config{};
+  audio_api::AudioConfig config{};
   config.sampleRate = static_cast<uint32_t>(SAMPLE_RATE);
 
-  auto session =
-      audio_io::setupAudioSession(config, audioCallback, &audioContext);
-
-  audio_io::startAudioSession(session);
-
-  audio_api::enableRawTerminal();
-  audio_api::captureKeyboardInputs(eventQueue);
-
-  audio_io::stopAudioSession(session);
-  audio_io::cleanupAudioSession(session);
-
+  audio_api::setupAudioProcess(config, processEvent, processBlock, &engine);
   return 0;
 }
