@@ -118,8 +118,8 @@ AudioStreamBasicDescription configToASBD(const audio_io::Config &config) {
  *
  * TODO(nico): AudioComponentDescription should be user config
  * TODO(nico): AudioObjectGetPropertyData w\ kAudioHardwarePropertyDevices
- * TODO(much-later): handle config incompatability
- * TODO(much-later): error handling in general
+ * TODO(later): handle config incompatability
+ * TODO(later): error handling in general
  */
 int coreAudioSetup(audio_io::hAudioSession sessionPtr) {
   // 1. Set audio component description values

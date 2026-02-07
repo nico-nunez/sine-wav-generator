@@ -1,7 +1,7 @@
 #ifndef SYNTH_VOICE_H
 #define SYNTH_VOICE_H
 
-#include "audio_api/NoteEventQueue.h"
+#include "platform/NoteEventQueue.h"
 #include "synth/Envelope.h"
 #include "synth/Oscillator.h"
 
@@ -10,10 +10,10 @@ struct NoteEvent;
 
 class Voice {
 public:
-  Voice(OscillatorType oscType = OscillatorType::Sine,
+  Voice(OscillatorType oscType = OscillatorType::Saw,
         float sampleRate = DEFAULT_SAMPLE_RATE);
 
-  void noteOn(const audio_api::NoteEvent &event);
+  void noteOn(const platform::NoteEvent &event);
   void noteOff();
 
   float process();
@@ -24,9 +24,12 @@ public:
   void setOscillatorType(OscillatorType oscType);
   void setSampleRate(float sampleRate);
 
+  bool shouldStop(platform::MIDINote midiNote);
+
 private:
   Oscillator mOscillator;
   Envelope mEnvelope;
+  platform::MIDINote mMidiNote;
   bool mIsActive = false;
 };
 

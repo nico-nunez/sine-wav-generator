@@ -18,7 +18,7 @@
 - Exception: Documentation and reference materials can be created/updated when asked
 
 ## Documentation Style
-Reference docs in `docs/cpp-reference/` should be:
+Reference docs in `_docs_/` (note the underscores) should be:
 - **Concise and to the point** - no excessive filler
 - **Scannable** - clear sections, code examples, key takeaways
 - **Practical** - focus on "aha moments" and common gotchas

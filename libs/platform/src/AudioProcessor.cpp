@@ -1,11 +1,11 @@
-#include "AudioProcessor.h"
-#include "NoteEventQueue.h"
+#include "platform/AudioProcessor.h"
+#include "platform/KeyProcessor.h"
+#include "platform/NoteEventQueue.h"
+
 #include "audio_io/AudioIO.h"
 #include "audio_io/AudioIOTypes.h"
-#include "audio_io/KeyEvents.h"
 
-namespace audio_api {
-
+namespace platform {
 // Test state
 struct AudioContext {
   NoteEventQueue *eventQueue;
@@ -17,7 +17,7 @@ struct AudioContext {
 static void audioCallback(audio_io::AudioBuffer buffer, void *context) {
   auto *ctx = static_cast<AudioContext *>(context);
 
-  audio_api::NoteEvent event;
+  NoteEvent event;
   while (ctx->eventQueue->pop(event)) {
     ctx->processEvent(event, ctx->userContext);
   }
@@ -46,10 +46,11 @@ void setupAudioProcess(AudioConfig userConfig, EventHandler eventHandler,
 
   audio_io::startAudioSession(session);
 
-  audio_io::captureKeyEvents(eventQueue);
+  // audio_io::captureKeyEvents(eventQueue);
+  startKeyInputCapture(eventQueue);
 
   audio_io::stopAudioSession(session);
   audio_io::cleanupAudioSession(session);
 };
 
-} // namespace audio_api
+} // namespace platform

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "audio_api/NoteEventQueue.h"
+#include "NoteEventQueue.h"
 #include "audio_io/AudioIOTypes.h"
 #include <cstdint>
 
-namespace audio_api {
+namespace platform {
 
 // --- Constants ---
 inline constexpr uint32_t DEFAULT_SAMPLE_RATE = 48000;
@@ -32,4 +32,4 @@ typedef void (*BufferHandler)(float **outputBuffer, size_t numChannels,
 void setupAudioProcess(AudioConfig userConfig, EventHandler eventHandler,
                        BufferHandler bufferHandler, void *userContext);
 
-} // namespace audio_api
+} // namespace platform

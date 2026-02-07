@@ -2,7 +2,11 @@
 -std=c++17
 -Isrc
 -Ilibs/audio_io/src
--Ilibs/audio_io/include
+-Ilibs/audio_io/src
+-Ilibs/input_io/include
+-Ilibs/input_io/include
+-Ilibs/platform/src
+-Ilibs/platform/include
 -Wall
 -Weffc++
 -Wextra

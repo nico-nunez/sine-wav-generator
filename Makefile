@@ -1,15 +1,25 @@
 CXX = clang++
 DEBUG_FLAGS = -std=c++17 -Wall -Weffc++ -Wextra -Werror -pedantic-errors -Wconversion -Wsign-conversion -ggdb -O0
-RELEASE_FLAGS = -std=c++17 Wall -Weffc++ -Wextra -Werror -pedantic-errors -Wconversion -Wsign-conversion -O2 -DNDEBUG
-TARGET = main 
+RELEASE_FLAGS = -std=c++17 -Wall -Weffc++ -Wextra -Werror -pedantic-errors -Wconversion -Wsign-conversion -O2 -DNDEBUG
+TARGET = main
+BUILD_DIR = build
 
 # Find all source files
-SOURCES = $(shell find src -name '*.cpp') $(shell find libs/audio_io/src -name '*.cpp')
+CPP_SOURCES = $(shell find src -name '*.cpp') $(shell find libs/audio_io/src libs/input_io/src libs/platform/src -name '*.cpp')
+MM_SOURCES = $(shell find libs/input_io/src -name '*.mm')
+
+# Object files (in build directory)
+CPP_OBJECTS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CPP_SOURCES))
+MM_OBJECTS = $(patsubst %.mm,$(BUILD_DIR)/%.o,$(MM_SOURCES))
+ALL_OBJECTS = $(CPP_OBJECTS) $(MM_OBJECTS)
 
 # Add src/ to include search path
-INCLUDES = -Isrc -Ilibs/audio_io/include -Ilibs/audio_io/src 
+INCLUDES = -Isrc -Ilibs/audio_io/include -Ilibs/audio_io/src -Ilibs/input_io/include -Ilibs/input_io/src -Ilibs/platform/include -Ilibs/platform/src
 
-LDFLAGS = -framework CoreAudio -framework AudioToolbox -framework ApplicationServices
+LDFLAGS = -framework CoreAudio -framework AudioToolbox -framework ApplicationServices -framework Cocoa
+
+# Objective-C++ flags (subset of warnings, some don't apply well to ObjC++)
+OBJCXX_FLAGS = -std=c++17 -fobjc-arc -Wall -Wextra -Werror
 
 debug: CXXFLAGS = $(DEBUG_FLAGS)
 debug: $(TARGET)
@@ -17,11 +27,21 @@ debug: $(TARGET)
 release: CXXFLAGS = $(RELEASE_FLAGS)
 release: $(TARGET)
 
+# Link all objects
+$(TARGET): $(ALL_OBJECTS)
+	$(CXX) $(LDFLAGS) -o $(TARGET) $(ALL_OBJECTS)
 
-$(TARGET): $(SOURCES)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LDFLAGS) -o $(TARGET) $(SOURCES)
+# Compile C++ sources
+$(BUILD_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+# Compile Objective-C++ sources
+$(BUILD_DIR)/%.o: %.mm
+	@mkdir -p $(dir $@)
+	$(CXX) -xobjective-c++ $(OBJCXX_FLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	rm -f $(TARGET)
+	rm -rf $(TARGET) $(BUILD_DIR)
 
 .PHONY: debug release clean

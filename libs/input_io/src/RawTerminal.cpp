@@ -1,5 +1,4 @@
-#include "RawTerminal.h"
-#include "NoteEventQueue.h"
+#include "input_io/RawTerminal.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -9,7 +8,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-namespace audio_api {
+namespace input_io {
 static struct termios orig_termios;
 
 void enableRawTerminal() {
@@ -33,7 +32,7 @@ void disableRawTerminal() {
   tcsetattr(STDERR_FILENO, TCSAFLUSH, &orig_termios);
 }
 
-void captureKeyboardInputs(NoteEventQueue &eventQueue) {
+void captureKeyboardInputs(platform::NoteEventQueue &eventQueue) {
   bool running = true;
   char c;
 
@@ -47,18 +46,19 @@ void captureKeyboardInputs(NoteEventQueue &eventQueue) {
       } else {
         uint8_t midiNote{asciiToMidi(c)};
         if (midiNote) {
-          eventQueue.push(NoteEvent{NoteEventType::NoteOn, midiNote, 100});
+          eventQueue.push(platform::NoteEvent{platform::NoteEventType::NoteOn,
+                                              midiNote, 100});
         }
       }
     }
   }
 }
 
-uint8_t asciiToMidi(char key) {
+platform::MIDINote asciiToMidi(char key) {
   static constexpr uint8_t SEMITONES = 12;
   static uint8_t octiveOffset = 0;
 
-  uint8_t midiKey = 0;
+  platform::MIDINote midiKey = 0;
 
   // Change Octive
   if (key == 122) { // ('z')
@@ -130,4 +130,4 @@ uint8_t asciiToMidi(char key) {
   return midiKey + (octiveOffset * SEMITONES);
 }
 
-} // namespace audio_api
+} // namespace input_io

@@ -1,7 +1,7 @@
 #ifndef SYNTH_ENGINE_H
 #define SYNTH_ENGINE_H
 
-#include "audio_api/NoteEventQueue.h"
+#include "platform/NoteEventQueue.h"
 #include "synth/Oscillator.h"
 #include "synth/Voice.h"
 
@@ -17,7 +17,7 @@ public:
   void setOscillatorType(const OscillatorType oscType);
   void getOscillatorType() const;
 
-  void processEvent(const audio_api::NoteEvent &event);
+  void processEvent(const platform::NoteEvent &event);
 
   void processBlock(float **outputBuffer, size_t numChannels, size_t numFrames);
 

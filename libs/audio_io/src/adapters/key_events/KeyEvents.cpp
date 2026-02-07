@@ -3,15 +3,14 @@
 #include <cstddef>
 #include <cstdio>
 
-#include "audio_api/NoteEventQueue.h"
-#include "audio_api/RawTerminal.h"
-#include "audio_io/KeyEvents.h"
+#include "input_io/RawTerminal.h"
+#include "platform/NoteEventQueue.h"
 
 namespace audio_io {
 
 static CGEventRef event_callback(CGEventTapProxy /*proxy*/, CGEventType type,
                                  CGEventRef event, void *refcon) {
-  auto ctx = static_cast<audio_api::NoteEventQueue *>(refcon);
+  auto ctx = static_cast<platform::NoteEventQueue *>(refcon);
 
   if (type == kCGEventKeyDown || type == kCGEventKeyUp) {
     // CGKeyCode keycode =
@@ -22,6 +21,9 @@ static CGEventRef event_callback(CGEventTapProxy /*proxy*/, CGEventType type,
     char asciiValue{};
     UniChar unicodeString[1];
     UniCharCount stringLength;
+
+    if (CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat))
+      return NULL;
 
     CGEventKeyboardGetUnicodeString(event, 1, &stringLength, unicodeString);
     if (stringLength) {
@@ -38,10 +40,13 @@ static CGEventRef event_callback(CGEventTapProxy /*proxy*/, CGEventType type,
       CFRunLoopStop(CFRunLoopGetCurrent());
       printf("Thanks for playing....Goodbye :)\n");
 
-    } else if (asciiValue && is_down) {
+    } else if ((asciiValue == 120 || asciiValue == 122) && !is_down) {
+      return NULL;
+    } else {
       // Push NoteEvent
-      ctx->push(audio_api::NoteEvent{audio_api::NoteEventType::NoteOn,
-                                     audio_api::asciiToMidi(asciiValue), 100});
+      ctx->push(platform::NoteEvent{is_down ? platform::NoteEventType::NoteOn
+                                            : platform::NoteEventType::NoteOff,
+                                    input_io::asciiToMidi(asciiValue), 127});
     }
 
     fflush(stdout);
@@ -72,7 +77,7 @@ int checkAccessibilityPermissions() {
   return 0;
 }
 
-int captureKeyEvents(audio_api::NoteEventQueue &eventQueue) {
+int captureKeyEvents(platform::NoteEventQueue &eventQueue) {
   CGEventMask mask =
       CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventKeyUp);
 
