@@ -12,6 +12,8 @@
 #pragma once
 #include <cstdint>
 
+namespace device_io {
+
 // Key event types
 enum class KeyEventType {
   KeyDown,        // Key initially pressed
@@ -105,3 +107,5 @@ void runKeyCaptureLoop();
 
 // Request the app to stop (breaks out of runKeyCaptureLoop)
 void stopKeyCaptureLoop();
+
+} // namespace device_io

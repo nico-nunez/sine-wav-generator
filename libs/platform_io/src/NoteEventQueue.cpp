@@ -1,7 +1,7 @@
-#include "platform/NoteEventQueue.h"
+#include "platform_io/NoteEventQueue.h"
 #include <cstddef>
 
-namespace platform {
+namespace platform_io {
 
 bool NoteEventQueue::push(const NoteEvent &event) {
   size_t currentIndex = writeIndex.load();
@@ -46,4 +46,4 @@ void NoteEventQueue::printQueue() {
   }
 }
 
-} // namespace platform
+} // namespace platform_io

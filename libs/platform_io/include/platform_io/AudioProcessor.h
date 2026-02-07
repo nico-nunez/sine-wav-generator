@@ -4,7 +4,7 @@
 #include "audio_io/AudioIOTypes.h"
 #include <cstdint>
 
-namespace platform {
+namespace platform_io {
 
 // --- Constants ---
 inline constexpr uint32_t DEFAULT_SAMPLE_RATE = 48000;
@@ -32,4 +32,4 @@ typedef void (*BufferHandler)(float **outputBuffer, size_t numChannels,
 void setupAudioProcess(AudioConfig userConfig, EventHandler eventHandler,
                        BufferHandler bufferHandler, void *userContext);
 
-} // namespace platform
+} // namespace platform_io

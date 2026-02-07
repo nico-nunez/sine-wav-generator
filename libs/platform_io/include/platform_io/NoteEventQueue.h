@@ -5,32 +5,33 @@
 #include <cstdint>
 #include <cstdio>
 
-namespace audio_io {
-enum class KeyEventType { KeyUp, KeyDown };
+namespace platform_io {
+using MIDINote = uint8_t;
 
-struct KeyEvent {
-  KeyEventType type;
-  uint8_t keycode;
-  uint8_t asciiCode;
+enum class NoteEventType { NoteOff, NoteOn };
+
+struct NoteEvent {
+  NoteEventType type;
+  MIDINote midiNote;
+  uint8_t velocity;
 };
 
-struct KeyEventQueue {
+struct NoteEventQueue {
   // NOTE(nico): SIZE value need to be power of to use bitmasking for wrapping
   // Alternative is modulo (%) which is more expensive
   static constexpr size_t SIZE{256};
   static constexpr size_t WRAP{SIZE - 1};
 
-  KeyEvent queue[SIZE];
+  NoteEvent queue[SIZE];
 
   std::atomic<size_t> readIndex{0};
   std::atomic<size_t> writeIndex{0};
 
-  // Methods
-  bool push(const KeyEvent &event);
-  bool pop(KeyEvent &event);
+  bool push(const NoteEvent &event);
+  bool pop(NoteEvent &event);
 
-  void printEvent(KeyEvent &event);
+  void printEvent(NoteEvent &event);
   void printQueue();
 };
 
-} // namespace audio_io
+} // namespace platform_io

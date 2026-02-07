@@ -1,5 +1,5 @@
 #include "synth/Engine.h"
-#include "platform/NoteEventQueue.h"
+#include "platform_io/NoteEventQueue.h"
 #include "synth/Oscillator.h"
 #include "synth/Voice.h"
 
@@ -27,11 +27,11 @@ void Engine::setOscillatorType(const OscillatorType oscType) {
   }
 }
 
-void Engine::processEvent(const platform::NoteEvent &event) {
+void Engine::processEvent(const platform_io::NoteEvent &event) {
   if (!event.midiNote)
     return;
 
-  if (event.type == platform::NoteEventType::NoteOff) {
+  if (event.type == platform_io::NoteEventType::NoteOff) {
     // Find and turn off Voice playing the note
     for (auto &voice : mVoices) {
       if (voice.shouldStop(event.midiNote)) {

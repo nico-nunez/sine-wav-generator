@@ -5,8 +5,8 @@ TARGET = main
 BUILD_DIR = build
 
 # Find all source files
-CPP_SOURCES = $(shell find src -name '*.cpp') $(shell find libs/audio_io/src libs/input_io/src libs/platform/src -name '*.cpp')
-MM_SOURCES = $(shell find libs/input_io/src -name '*.mm')
+CPP_SOURCES = $(shell find src libs/audio_io/src libs/device_io/src libs/platform_io/src -name '*.cpp')
+MM_SOURCES = $(shell find libs/device_io/src -name '*.mm')
 
 # Object files (in build directory)
 CPP_OBJECTS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CPP_SOURCES))
@@ -14,7 +14,7 @@ MM_OBJECTS = $(patsubst %.mm,$(BUILD_DIR)/%.o,$(MM_SOURCES))
 ALL_OBJECTS = $(CPP_OBJECTS) $(MM_OBJECTS)
 
 # Add src/ to include search path
-INCLUDES = -Isrc -Ilibs/audio_io/include -Ilibs/audio_io/src -Ilibs/input_io/include -Ilibs/input_io/src -Ilibs/platform/include -Ilibs/platform/src
+INCLUDES = -Isrc -Ilibs/audio_io/include -Ilibs/audio_io/src -Ilibs/device_io/include -Ilibs/device_io/src -Ilibs/platform_io/include -Ilibs/platform_io/src
 
 LDFLAGS = -framework CoreAudio -framework AudioToolbox -framework ApplicationServices -framework Cocoa
 

@@ -1,13 +1,13 @@
 #include "Voice.h"
 #include "Oscillator.h"
-#include "platform/NoteEventQueue.h"
+#include "platform_io/NoteEventQueue.h"
 #include "utils/SynthUtils.h"
 
 namespace Synth {
 Voice::Voice(OscillatorType oscType, float sampleRate)
     : mOscillator(oscType, sampleRate), mEnvelope(sampleRate) {}
 
-void Voice::noteOn(const platform::NoteEvent &event) {
+void Voice::noteOn(const platform_io::NoteEvent &event) {
   mOscillator.setFrequency(SynthUtils::midiToFrequency(event.midiNote));
   mIsActive = true;
   mMidiNote = event.midiNote;
@@ -17,7 +17,7 @@ void Voice::noteOn(const platform::NoteEvent &event) {
 
 void Voice::noteOff() { mEnvelope.noteOff(); }
 
-bool Voice::shouldStop(platform::MIDINote midiNote) {
+bool Voice::shouldStop(platform_io::MIDINote midiNote) {
   return mIsActive && !isReleasing() && mMidiNote == midiNote;
 }
 

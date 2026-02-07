@@ -1,7 +1,7 @@
 // KeyCapture.mm
 // Cocoa keyboard capture implementation
 
-#include "input_io/KeyCapture.h"
+#include "device_io/KeyCapture.h"
 #import <Cocoa/Cocoa.h>
 
 // -----------------------------------------------------------------------------
@@ -10,45 +10,10 @@
 
 static id g_localMonitor = nil;
 static id g_globalMonitor = nil;
-static KeyCallback g_callback = nullptr;
+static device_io::KeyCallback g_callback = nullptr;
 static void *g_userData = nullptr;
 static NSWindow *g_window = nil;
 static NSTextField *g_textField = nil;
-
-// -----------------------------------------------------------------------------
-// Internal: Convert NSEvent to KeyEvent and dispatch
-// -----------------------------------------------------------------------------
-
-static void populateModifiers(KeyEvent &ke, NSEventModifierFlags flags) {
-  ke.shift = (flags & NSEventModifierFlagShift) != 0;
-  ke.ctrl = (flags & NSEventModifierFlagControl) != 0;
-  ke.alt = (flags & NSEventModifierFlagOption) != 0;
-  ke.cmd = (flags & NSEventModifierFlagCommand) != 0;
-  ke.capsLock = (flags & NSEventModifierFlagCapsLock) != 0;
-  ke.fn = (flags & NSEventModifierFlagFunction) != 0;
-}
-
-static void dispatchKeyEvent(NSEvent *event, KeyEventType type) {
-  if (!g_callback)
-    return;
-
-  KeyEvent ke{};
-  ke.type = type;
-  ke.keyCode = event.keyCode;
-
-  // Get ASCII character if available (not applicable for modifier events)
-  if (type != KeyEventType::ModifierChanged && event.characters.length > 0) {
-    unichar c = [event.characters characterAtIndex:0];
-    ke.character = (c < 128) ? static_cast<char>(c) : 0;
-  } else {
-    ke.character = 0;
-  }
-
-  // Modifier flags
-  populateModifiers(ke, event.modifierFlags);
-
-  g_callback(ke, g_userData);
-}
 
 // -----------------------------------------------------------------------------
 // App Delegate for handling app lifecycle
@@ -105,6 +70,42 @@ static void dispatchKeyEvent(NSEvent *event, KeyEventType type) {
 
 @end
 
+namespace device_io {
+// -----------------------------------------------------------------------------
+// Internal: Convert NSEvent to KeyEvent and dispatch
+// -----------------------------------------------------------------------------
+
+static void populateModifiers(KeyEvent &ke, NSEventModifierFlags flags) {
+  ke.shift = (flags & NSEventModifierFlagShift) != 0;
+  ke.ctrl = (flags & NSEventModifierFlagControl) != 0;
+  ke.alt = (flags & NSEventModifierFlagOption) != 0;
+  ke.cmd = (flags & NSEventModifierFlagCommand) != 0;
+  ke.capsLock = (flags & NSEventModifierFlagCapsLock) != 0;
+  ke.fn = (flags & NSEventModifierFlagFunction) != 0;
+}
+
+static void dispatchKeyEvent(NSEvent *event, KeyEventType type) {
+  if (!g_callback)
+    return;
+
+  KeyEvent ke{};
+  ke.type = type;
+  ke.keyCode = event.keyCode;
+
+  // Get ASCII character if available (not applicable for modifier events)
+  if (type != KeyEventType::ModifierChanged && event.characters.length > 0) {
+    unichar c = [event.characters characterAtIndex:0];
+    ke.character = (c < 128) ? static_cast<char>(c) : 0;
+  } else {
+    ke.character = 0;
+  }
+
+  // Modifier flags
+  populateModifiers(ke, event.modifierFlags);
+
+  g_callback(ke, g_userData);
+}
+
 // -----------------------------------------------------------------------------
 // Public API Implementation
 // -----------------------------------------------------------------------------
@@ -118,7 +119,7 @@ void initKeyCaptureApp() {
   [NSApp setDelegate:delegate];
 }
 
-bool createCaptureWindow(WindowConfig config) {
+bool createCaptureWindow(device_io::WindowConfig config) {
   @autoreleasepool {
     // Create window
     NSRect frame = NSMakeRect(0, 0, config.width, config.height);
@@ -176,20 +177,22 @@ void setWindowText(const char *text) {
   }
 }
 
-static KeyEventType getKeyEventType(NSEvent *event) {
+static device_io::KeyEventType getKeyEventType(NSEvent *event) {
   switch (event.type) {
   case NSEventTypeKeyDown:
-    return event.isARepeat ? KeyEventType::KeyRepeat : KeyEventType::KeyDown;
+    return event.isARepeat ? device_io::KeyEventType::KeyRepeat
+                           : device_io::KeyEventType::KeyDown;
   case NSEventTypeKeyUp:
-    return KeyEventType::KeyUp;
+    return device_io::KeyEventType::KeyUp;
   case NSEventTypeFlagsChanged:
-    return KeyEventType::ModifierChanged;
+    return device_io::KeyEventType::ModifierChanged;
   default:
-    return KeyEventType::KeyDown; // Fallback, shouldn't happen
+    return device_io::KeyEventType::KeyDown; // Fallback, shouldn't happen
   }
 }
 
-bool startKeyCapture(KeyCallback callback, void *userData, CaptureMode mode) {
+bool startKeyCapture(device_io::KeyCallback callback, void *userData,
+                     device_io::CaptureMode mode) {
   if (!callback)
     return false;
 
@@ -200,7 +203,8 @@ bool startKeyCapture(KeyCallback callback, void *userData, CaptureMode mode) {
       NSEventMaskKeyDown | NSEventMaskKeyUp | NSEventMaskFlagsChanged;
 
   // Set up local monitor (requires window focus)
-  if (mode == CaptureMode::Local || mode == CaptureMode::Both) {
+  if (mode == device_io::CaptureMode::Local ||
+      mode == device_io::CaptureMode::Both) {
     g_localMonitor = [NSEvent
         addLocalMonitorForEventsMatchingMask:mask
                                      handler:^NSEvent *(NSEvent *event) {
@@ -212,7 +216,8 @@ bool startKeyCapture(KeyCallback callback, void *userData, CaptureMode mode) {
   }
 
   // Set up global monitor (requires Accessibility permissions)
-  if (mode == CaptureMode::Global || mode == CaptureMode::Both) {
+  if (mode == device_io::CaptureMode::Global ||
+      mode == device_io::CaptureMode::Both) {
     g_globalMonitor = [NSEvent
         addGlobalMonitorForEventsMatchingMask:mask
                                       handler:^(NSEvent *event) {
@@ -223,9 +228,9 @@ bool startKeyCapture(KeyCallback callback, void *userData, CaptureMode mode) {
 
   // Check if at least one monitor was created
   bool success = false;
-  if (mode == CaptureMode::Local) {
+  if (mode == device_io::CaptureMode::Local) {
     success = (g_localMonitor != nil);
-  } else if (mode == CaptureMode::Global) {
+  } else if (mode == device_io::CaptureMode::Global) {
     success = (g_globalMonitor != nil);
   } else {
     success = (g_localMonitor != nil || g_globalMonitor != nil);
@@ -250,3 +255,4 @@ void stopKeyCapture() {
 void runKeyCaptureLoop() { [NSApp run]; }
 
 void stopKeyCaptureLoop() { [NSApp terminate:nil]; }
+} // namespace device_io

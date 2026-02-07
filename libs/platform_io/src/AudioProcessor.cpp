@@ -1,11 +1,11 @@
-#include "platform/AudioProcessor.h"
-#include "platform/KeyProcessor.h"
-#include "platform/NoteEventQueue.h"
+#include "platform_io/AudioProcessor.h"
+#include "platform_io/KeyProcessor.h"
+#include "platform_io/NoteEventQueue.h"
 
 #include "audio_io/AudioIO.h"
 #include "audio_io/AudioIOTypes.h"
 
-namespace platform {
+namespace platform_io {
 // Test state
 struct AudioContext {
   NoteEventQueue *eventQueue;
@@ -53,4 +53,4 @@ void setupAudioProcess(AudioConfig userConfig, EventHandler eventHandler,
   audio_io::cleanupAudioSession(session);
 };
 
-} // namespace platform
+} // namespace platform_io
