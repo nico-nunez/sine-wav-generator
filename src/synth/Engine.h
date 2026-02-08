@@ -26,6 +26,7 @@ private:
 
   OscillatorType mOscillatorType{};
   Voice mVoices[MAX_VOICES];
+  float mDrive{2.0f};
 
   float maxReleaseTime{};
 
