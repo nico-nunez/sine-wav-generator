@@ -20,12 +20,32 @@ Engine::Engine(const float sampleRate, const OscillatorType oscType)
   }
 }
 
+OscillatorType Engine::getOscillatorType() const { return mOscillatorType; }
+
 void Engine::setOscillatorType(const OscillatorType oscType) {
   mOscillatorType = oscType;
 
   for (Voice &voice : mVoices) {
     voice.setOscillatorType(mOscillatorType);
   }
+}
+
+float Engine::getDrive() const { return mDrive; }
+
+void Engine::setDrive(float newValue) {
+  if (newValue < 1) {
+    mDrive = 0;
+    mInvNormDrive = 0;
+    return;
+  }
+
+  if (newValue >= 10) {
+    mDrive = 10;
+  } else {
+    mDrive = newValue;
+  }
+
+  mInvNormDrive = 1.0f / tanh(mDrive);
 }
 
 void Engine::processEvent(const platform_io::NoteEvent &event) {
@@ -52,8 +72,6 @@ void Engine::processEvent(const platform_io::NoteEvent &event) {
 
 void Engine::processBlock(float **outputBuffer, size_t numChannels,
                           size_t numFrames) {
-  float invNorm = mDrive >= 1 ? 1.0f / std::tanh(mDrive) : 0;
-
   // NOTE(nico): Non-Interleaved for now
   for (size_t frame = 0; frame < numFrames; frame++) {
     float sampleValue = 0;
@@ -64,8 +82,9 @@ void Engine::processBlock(float **outputBuffer, size_t numChannels,
       sampleValue += voice.process() * DEFAULT_AMPLITUDE;
     }
 
-    float finalSample = invNorm > 0 ? std::tanh(sampleValue * mDrive) * invNorm
-                                    : std::tanh(sampleValue);
+    float finalSample = mDrive >= 1
+                            ? std::tanh(sampleValue * mDrive) * mInvNormDrive
+                            : std::tanh(sampleValue);
 
     for (size_t ch = 0; ch < numChannels; ch++) {
       outputBuffer[ch][frame] = finalSample;
@@ -78,28 +97,28 @@ float tanhFast(float x) {
   return (x * (27.0f + x * x)) / (27.0f + 9.0f * x * x);
 }
 
-// void Engine::processBlockFast(float **outputBuffer, size_t numChannels,
-//                                    size_t numFrames) {
-//   float normalization = tanhFast(mDrive);
-//   float invNormalization = 1.0f / normalization;
-//
-//   // NOTE(nico): Non-Interleaved for now
-//   for (size_t frame = 0; frame < numFrames; frame++) {
-//     float sampleValue = 0;
-//     for (auto &voice : mVoices) {
-//       if (voice.isAvailable())
-//         continue;
-//
-//       sampleValue += voice.process() * DEFAULT_AMPLITUDE;
-//     }
-//
-//     float drivenSample = sampleValue * mDrive;
-//     float clipped = tanhFast(drivenSample);
-//     float finalSample = clipped * invNormalization;
-//
-//     for (size_t ch = 0; ch < numChannels; ch++) {
-//       outputBuffer[ch][frame] = finalSample;
-//     }
-//   }
-// }
+void Engine::processBlockFast(float **outputBuffer, size_t numChannels,
+                              size_t numFrames) {
+  float normalization = tanhFast(mDrive);
+  float invNormalization = 1.0f / normalization;
+
+  // NOTE(nico): Non-Interleaved for now
+  for (size_t frame = 0; frame < numFrames; frame++) {
+    float sampleValue = 0;
+    for (auto &voice : mVoices) {
+      if (voice.isAvailable())
+        continue;
+
+      sampleValue += voice.process() * DEFAULT_AMPLITUDE;
+    }
+
+    float drivenSample = sampleValue * mDrive;
+    float clipped = tanhFast(drivenSample);
+    float finalSample = clipped * invNormalization;
+
+    for (size_t ch = 0; ch < numChannels; ch++) {
+      outputBuffer[ch][frame] = finalSample;
+    }
+  }
+}
 } // namespace Synth
