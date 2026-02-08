@@ -43,7 +43,7 @@ void Oscillator::incrementPhase() {
 
 float Oscillator::process() {
   incrementPhase();
-  return mWaveformFunc(mPhase);
+  return mWaveformFunc(mPhase, mPhaseIncrement);
 }
 
 void Oscillator::setOscillatorType(OscillatorType oscType) {
@@ -52,10 +52,10 @@ void Oscillator::setOscillatorType(OscillatorType oscType) {
     mWaveformFunc = Waveforms::sine;
     break;
   case OscillatorType::Saw:
-    mWaveformFunc = Waveforms::saw;
+    mWaveformFunc = Waveforms::sawPolyBlep;
     break;
   case OscillatorType::Square:
-    mWaveformFunc = Waveforms::square;
+    mWaveformFunc = Waveforms::squarePolyBlep;
     break;
   case OscillatorType::Triangle:
     mWaveformFunc = Waveforms::triangle;

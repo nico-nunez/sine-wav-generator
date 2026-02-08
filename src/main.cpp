@@ -20,7 +20,7 @@ int main() {
   constexpr float SAMPLE_RATE = 48000.0f;
 
   // 1. Setup synth engine
-  Synth::Engine engine{SAMPLE_RATE, Synth::OscillatorType::Saw};
+  Synth::Engine engine{SAMPLE_RATE, Synth::OscillatorType::Square};
 
   // 2. Setup audio_io
   platform_io::AudioConfig config{};
