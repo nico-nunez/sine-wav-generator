@@ -21,7 +21,8 @@ LDFLAGS = -framework CoreAudio -framework AudioToolbox -framework ApplicationSer
 # Objective-C++ flags (subset of warnings, some don't apply well to ObjC++)
 OBJCXX_FLAGS = -std=c++17 -fobjc-arc -Wall -Wextra -Werror
 
-debug: CXXFLAGS = $(DEBUG_FLAGS)
+OLD ?= 0
+debug: CXXFLAGS = $(DEBUG_FLAGS) -DOLD=$(OLD)
 debug: $(TARGET)
 
 release: CXXFLAGS = $(RELEASE_FLAGS)

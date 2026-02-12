@@ -25,6 +25,17 @@ float softClip(float sample, float drive, float invDrive, float mix) {
   return sample * (1.0f - mix) + (saturated * mix);
 }
 
+// NOTE(nico): Revisit this for creative effect
+// Less for protection and requires control of input levels
+// Can't be too hot
+inline float softClipAlt(float x) {
+  if (x > 1.0f)
+    return 1.0f;
+  if (x < -1.0f)
+    return -1.0f;
+  return x - (x * x * x) / 3.0f; // x - x³/3
+}
+
 // Polynomial approximation of tanh
 float softClipFast(float x) {
   return (x * (27.0f + x * x)) / (27.0f + 9.0f * x * x);

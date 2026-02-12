@@ -12,6 +12,7 @@ float calcInvDrive(float drive);
 // NOTE(nico): _drive_ and _invDrive_ should be denormalized
 // but _mix_ still normalized
 float softClip(float sample, float drive, float invDrive, float mix = 1.0);
+float softClipFast(float sample);
 
 // NOTE(nico): _drive_ should be denormalized
 // _bias_ should be normalized

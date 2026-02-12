@@ -1,0 +1,17 @@
+#pragma once
+
+#include <cstdint>
+
+namespace synth {
+inline constexpr uint32_t MAX_VOICES = 64;
+
+inline constexpr int ROOT_NOTE_MIDI{69};
+inline constexpr float ROOT_NOTE_FREQ{440.0f};
+
+using MidiNote = uint8_t;
+
+// Adjust/reduce gain based on N voices
+// 1.0f / std::sqrtf(MAX_VOICES);
+inline constexpr float VOICE_GAIN = 1.0f / 8.0f;
+
+} // namespace synth

@@ -113,7 +113,7 @@ void writeWavFile(const std::string &filename, std::vector<float> &audioBuffer,
     std::cerr << "Error: Could not create output.wav\n";
   }
 
-  Utils::Log("Writing WAV file...");
+  synth::utils::Log("Writing WAV file...");
 
   writeWavMetadata(wavFile, TOTAL_SAMPLES, sampleRate);
 
