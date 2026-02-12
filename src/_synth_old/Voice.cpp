@@ -1,7 +1,9 @@
 #include "Voice.h"
 #include "Oscillator.h"
-#include "platform_io/NoteEventQueue.h"
+
 #include "utils/SynthUtils.h"
+
+#include "platform_io/NoteEventQueue.h"
 
 namespace Synth {
 Voice::Voice(OscillatorType oscType, float sampleRate)

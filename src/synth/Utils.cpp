@@ -1,5 +1,6 @@
 #include "Utils.h"
-#include "_synth_/Types.h"
+#include "Types.h"
+
 #include <cmath>
 
 namespace synth::utils {

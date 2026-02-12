@@ -1,72 +1,103 @@
 #include "Oscillator.h"
-#include "synth/Waveform.h"
-#include <stdexcept>
+#include "Utils.h"
 
-namespace Synth {
+#include <cmath>
+#include <cstdint>
 
-Oscillator::Oscillator(OscillatorType oscType, float sampleRate)
-    : mWaveform(oscType), mSampleRate(sampleRate) {
-  setOscillatorType(oscType);
+namespace synth::oscillator {
+
+// Create a new Oscillator with passed config
+Oscillator createOscillator(const OscConfig &config) {
+  Oscillator osc{};
+  updateConfig(osc, config);
+
+  return osc;
 }
 
-void Oscillator::setFrequency(float freq) {
-  mPhase = 0;
-  mFrequency = freq;
-  calcPhaseIncrement();
+void initOscillator(Oscillator &osc, uint32_t voiceIndex, uint8_t midiNote,
+                    float sampleRate) {
+
+  float freq = utils::midiToFrequency(midiNote) *
+               std::pow(2.0f, static_cast<float>(osc.octaveOffset)) *
+               std::pow(2.0f, osc.detuneAmount / 1200.0f);
+
+  osc.phases[voiceIndex] = 0.0f;
+  osc.phaseIncrements[voiceIndex] = freq / sampleRate;
 }
 
-float Oscillator::getFrequency() const { return mFrequency; }
+// void recalcActiveVoices(Oscillator &osc, const uint8_t midiNotes[],
+//                         const uint8_t isActive[], float sampleRate) {
+//   // TODO(nico-nunez): coming soon....
+// }
 
-void Oscillator::setSampleRate(float sampleRate) {
-  mSampleRate = sampleRate;
-  calcPhaseIncrement();
+// TODO(nico): are the following even necessary
+// given it's up to the caller to recalculate?
+void setWaveformType(Oscillator &osc, WaveformType newType) {
+  osc.waveform = newType;
+  // NOTE(nico): don't reset active voices or update anything else
+  // Caller can do this if they want but shouldn't on active voices (clicks)
 }
 
-float Oscillator::getSampleRate() const { return mSampleRate; }
-
-// Calculate in advance in order to increment the phase each step.
-// More efficient than time-based calculation on every increment.
-// Introduces (neglibile) drift due to continous add operations using float
-void Oscillator::calcPhaseIncrement() {
-  mPhaseIncrement = mFrequency / mSampleRate; // normalized
-}
-
-// Increament after each sample
-void Oscillator::incrementPhase() {
-  mPhase += mPhaseIncrement;
-
-  // Wrap phase to prevent float precision issues
-  // due to limited number of significant digits (~7)
-  if (mPhase >= 1.0f)
-    mPhase -= 1.0f;
-}
-
-float Oscillator::process() {
-  incrementPhase();
-  return mWaveformFunc(mPhase, mPhaseIncrement);
-}
-
-void Oscillator::setOscillatorType(OscillatorType oscType) {
-  switch (oscType) {
-  case OscillatorType::Sine:
-    mWaveformFunc = Waveforms::sine;
-    break;
-  case OscillatorType::Saw:
-    mWaveformFunc = Waveforms::sawPolyBlep;
-    break;
-  case OscillatorType::Square:
-    mWaveformFunc = Waveforms::squarePolyBlep;
-    break;
-  case OscillatorType::Triangle:
-    mWaveformFunc = Waveforms::triangle;
-    break;
-  default:
-    throw std::runtime_error("Invalid oscillator type");
+void setMixLevel(Oscillator &osc, float newLevel) {
+  // Ensure values falls within valid range (0 - 4.0)
+  if (newLevel < 0.0f) {
+    newLevel = 0.0f;
+  } else if (newLevel > 4.0f) {
+    newLevel = 4.0f;
   }
 
-  mPhase = 0;
-  mWaveform = oscType;
-  calcPhaseIncrement();
+  osc.mixLevel = newLevel;
 }
 
-} // namespace Synth
+void setOctiveOffset(Oscillator &osc, int8_t newOffest) {
+  osc.octaveOffset = newOffest;
+  // NOTE(nico): recalculation needs to be triggerd by caller to update active
+  // voices
+}
+
+void setDetuneAmount(Oscillator &osc, float newDetuneAmount) {
+  osc.detuneAmount = newDetuneAmount;
+  // NOTE(nico): recalculation needs to be triggerd by caller to update active
+  // voices
+}
+
+void toggleEnabled(Oscillator &osc, bool isEnabled) { osc.enabled = isEnabled; }
+
+void incrementPhase(Oscillator &osc, uint32_t voiceIndex) {
+  osc.phases[voiceIndex] += osc.phaseIncrements[voiceIndex];
+
+  // Wrap index
+  if (osc.phases[voiceIndex] >= 1.0f)
+    osc.phases[voiceIndex] -= 1.0f;
+}
+
+float processOscillator(Oscillator &osc, uint32_t voiceIndex) {
+  float sample =
+      dsp::waveforms::processWaveform(osc.waveform, osc.phases[voiceIndex],
+                                      osc.phaseIncrements[voiceIndex]) *
+      osc.mixLevel;
+
+  incrementPhase(osc, voiceIndex);
+
+  return sample;
+}
+
+// Helper for updating global settings
+void updateConfig(Oscillator &osc, const OscConfig &config) {
+  if (osc.detuneAmount != config.detuneAmount)
+    osc.detuneAmount = config.detuneAmount;
+
+  if (osc.enabled != config.enabled)
+    osc.enabled = config.enabled;
+
+  if (osc.mixLevel != config.mixLevel)
+    osc.mixLevel = config.mixLevel;
+
+  if (osc.octaveOffset != config.octaveOffset)
+    osc.octaveOffset = config.octaveOffset;
+
+  if (osc.waveform != config.waveform)
+    osc.waveform = config.waveform;
+}
+
+} // namespace synth::oscillator

@@ -1,9 +1,10 @@
 #ifndef SYNTH_VOICE_H
 #define SYNTH_VOICE_H
 
+#include "Envelope.h"
+#include "Oscillator.h"
+
 #include "platform_io/NoteEventQueue.h"
-#include "synth/Envelope.h"
-#include "synth/Oscillator.h"
 
 namespace Synth {
 struct NoteEvent;

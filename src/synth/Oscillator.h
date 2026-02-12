@@ -1,49 +1,48 @@
-#ifndef SYNTH_OSCILLATOR_H
-#define SYNTH_OSCILLATOR_H
+#pragma once
 
-#include "synth/Waveform.h"
+#include "Types.h"
 
-namespace Synth {
-constexpr float DEFAULT_SAMPLE_RATE = 44100.0f;
-constexpr float DEFAULT_FREQUENCY = 440.0f; // A4
+#include "dsp/Waveforms.h"
 
-enum class OscillatorType {
-  Sine,
-  Saw,
-  Square,
-  Triangle,
+#include <cstdint>
+
+namespace synth::oscillator {
+using WaveformType = dsp::waveforms::WaveformType;
+
+struct OscConfig {
+  WaveformType waveform = WaveformType::Sine;
+  float mixLevel = 1.0f;     // 0.0-4.0 (-inf to +12DB)
+  int8_t octaveOffset = 0;   // -2 to +2
+  float detuneAmount = 0.0f; // Cents: -100 to +100
+  bool enabled = true;
 };
 
-class Oscillator {
-public:
-  Oscillator(OscillatorType oscType = OscillatorType::Sine,
-             float sampleRate = DEFAULT_SAMPLE_RATE);
+struct Oscillator {
+  // === Per-voice state (hot data) ===
+  float phases[MAX_VOICES];
+  float phaseIncrements[MAX_VOICES];
 
-  void setOscillatorType(OscillatorType oscType);
-
-  void setFrequency(float freq);
-  float getFrequency() const;
-
-  void setSampleRate(float sampleRate);
-  float getSampleRate() const;
-
-  float process();
-
-private:
-  OscillatorType mWaveform;
-  Waveforms::WaveformFunc mWaveformFunc = nullptr;
-
-  float mPhase = 0.0f;
-  float mPhaseIncrement;
-
-  float mFrequency = DEFAULT_FREQUENCY; // A4
-
-  float mSampleRate;
-
-  void incrementPhase();
-  void calcPhaseIncrement();
+  // === Global settings (cold data) ===
+  WaveformType waveform = WaveformType::Sine;
+  float mixLevel = 1.0f;     // 0.0-1.0
+  int8_t octaveOffset = 0;   // -2 to +2
+  float detuneAmount = 0.0f; // Cents: -100 to +100
+  bool enabled = true;
 };
 
-} // namespace Synth
+Oscillator createOscillator(const OscConfig &settings);
+void updateConfig(Oscillator &osc, const OscConfig &settings);
 
-#endif
+void setWaveformType(Oscillator &osc, WaveformType newType);
+void setMixLevel(Oscillator &osc, float newLevel);
+void setOctiveOffset(Oscillator &osc, int8_t newOffest);
+void setDetuneAmount(Oscillator &osc, float newDetuneAmount);
+void toggleEnabled(Oscillator &osc, bool isEnabled);
+
+void initOscillator(Oscillator &osc, uint32_t voiceIndex, uint8_t midiNote,
+                    float sampleRate);
+
+void incrementPhase(Oscillator &osc, uint32_t voiceIndex);
+float processOscillator(Oscillator &osc, uint32_t voiceIndex);
+
+} // namespace synth::oscillator

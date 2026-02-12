@@ -1,7 +1,8 @@
 #include "VoicePool.h"
-#include "_synth_/Envelope.h"
-#include "_synth_/Oscillator.h"
-#include "_synth_/Types.h"
+#include "Envelope.h"
+#include "Oscillator.h"
+#include "Types.h"
+
 #include "dsp/Effects.h"
 
 #include <cstddef>

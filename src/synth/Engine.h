@@ -1,45 +1,42 @@
-#ifndef SYNTH_ENGINE_H
-#define SYNTH_ENGINE_H
+#pragma once
 
+#include "VoicePool.h"
+
+#include "dsp/Waveforms.h"
+
+#include "platform_io/AudioProcessor.h"
 #include "platform_io/NoteEventQueue.h"
-#include "synth/Oscillator.h"
-#include "synth/Voice.h"
 
-namespace Synth {
+#include <cstdint>
 
-class Engine {
-public:
-  static constexpr int MAX_VOICES{10};
+namespace synth {
+using NoteEvent = platform_io::NoteEvent;
 
-  Engine(const float sampleRate = DEFAULT_SAMPLE_RATE,
-         const OscillatorType oscType = OscillatorType::Sine);
+using VoicePool = voices::VoicePool;
+using VoiceConfig = voices::VoicePoolConfig;
+using WaveformType = dsp::waveforms::WaveformType;
 
-  OscillatorType getOscillatorType() const;
-  void setOscillatorType(const OscillatorType oscType);
-
-  float getDrive() const;
-  void setDrive(float driveValue);
-
-  void processEvent(const platform_io::NoteEvent &event);
-
-  void processBlock(float **outputBuffer, size_t numChannels, size_t numFrames);
-  void processBlockFast(float **outputBuffer, size_t numChannels,
-                        size_t numFrames);
-
-private:
-  float mSampleRate;
-
-  OscillatorType mOscillatorType{};
-  Voice mVoices[MAX_VOICES];
-
-  float mDrive{0};
-  float mInvNormDrive{0};
-
-  float maxReleaseTime{};
-
-  void updateMaxReleaseTime();
+struct EngineConfig : VoiceConfig {
+  float sampleRate = platform_io::DEFAULT_SAMPLE_RATE;
+  uint32_t numFrames = platform_io::DEFAULT_FRAMES;
 };
 
-} // namespace Synth
+struct Engine {
+  static constexpr uint32_t NUM_FRAMES = platform_io::DEFAULT_FRAMES;
+  float sampleRate = platform_io::DEFAULT_SAMPLE_RATE;
 
-#endif
+  VoicePool voicePool;
+
+  // TODO(nico): this probably needs to live on heap
+  // since the number of frames won't be known at compile time
+  float poolBuffer[NUM_FRAMES];
+
+  uint32_t noteCount = 0;
+
+  void processEvent(const NoteEvent &event);
+  void processBlock(float **outputBuffer, size_t numChannels, size_t numFrames);
+};
+
+Engine createEngine(const EngineConfig &config);
+
+} // namespace synth

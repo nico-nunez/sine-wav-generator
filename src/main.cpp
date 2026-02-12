@@ -1,11 +1,13 @@
-#include "_synth_/Engine.h"
-#include "_synth_/Oscillator.h"
-#include "_synth_/VoicePool.h"
+#include "_synth_old/Engine.h"
+#include "_synth_old/Oscillator.h"
+
 #include "dsp/Waveforms.h"
 #include "platform_io/AudioProcessor.h"
 #include "platform_io/NoteEventQueue.h"
+
 #include "synth/Engine.h"
 #include "synth/Oscillator.h"
+#include "synth/VoicePool.h"
 
 #include <audio_io/AudioIO.h>
 #include <csignal>

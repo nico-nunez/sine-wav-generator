@@ -1,4 +1,5 @@
 #include "Waveform.h"
+
 #include <cmath>
 #include <cstdlib>
 

@@ -1,8 +1,9 @@
 #pragma once
 
+#include "Envelope.h"
 #include "Oscillator.h"
-#include "_synth_/Envelope.h"
-#include "_synth_/Types.h"
+#include "Types.h"
+
 #include "dsp/Waveforms.h"
 
 #include <cstddef>
