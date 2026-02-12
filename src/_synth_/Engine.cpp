@@ -3,6 +3,13 @@
 #include <cstdio>
 
 namespace synth {
+Engine createEngine(const EngineConfig &config) {
+  Engine engine{};
+  voices::updateVoicePoolConfig(engine.voicePool, config);
+
+  return engine;
+}
+
 void Engine::processEvent(const platform_io::NoteEvent &event) {
   if (!event.midiNote)
     return;

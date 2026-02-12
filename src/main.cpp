@@ -1,4 +1,6 @@
 #include "_synth_/Engine.h"
+#include "_synth_/Oscillator.h"
+#include "_synth_/VoicePool.h"
 #include "dsp/Waveforms.h"
 #include "platform_io/AudioProcessor.h"
 #include "platform_io/NoteEventQueue.h"
@@ -35,8 +37,15 @@ int main() {
 #if OLD
   Synth::Engine engine{SAMPLE_RATE, Synth::OscillatorType::Square};
 #else
-  synth::Engine engine{};
-  engine.sampleRate = SAMPLE_RATE;
+  using Engine = synth::Engine;
+  using EngineConfig = synth::EngineConfig;
+
+  EngineConfig engineConfig{};
+  engineConfig.sampleRate = SAMPLE_RATE;
+  engineConfig.osc2 = {synth::WaveformType::Saw, 0.5f, -1, 0.0f, true};
+  engineConfig.subOsc.mixLevel = 0.7f;
+
+  Engine engine = synth::createEngine(engineConfig);
 #endif
 
   // 2. Setup audio_io
