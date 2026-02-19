@@ -1,7 +1,9 @@
 #include "_synth_old/Engine.h"
 #include "_synth_old/Oscillator.h"
 
+#include "app/InputProcessor.h"
 #include "app/KeyProcessor.h"
+
 #include "device_io/KeyCapture.h"
 #include "dsp/Waveforms.h"
 #include "synth_io/Events.h"
@@ -14,6 +16,7 @@
 #include <audio_io/AudioIO.h>
 #include <csignal>
 #include <cstdio>
+#include <functional>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -44,17 +47,18 @@ static void processAudioBlock(float **outputBuffer, size_t numChannels,
   engine->processAudioBlock(outputBuffer, numChannels, numFrames);
 }
 
-static void getUserInput() {
+static void getUserInput(synth::Engine &engine,
+                         synth_io::hSynthSession sessionPtr) {
   bool isRunning = true;
   std::string input;
 
   while (isRunning) {
-    printf("Enter a command: ");
+    printf(">");
     std::getline(std::cin, input);
 
-    std::cout << "Parsing: " << input << std::endl;
+    synth::input_proc::parseCommand(input, engine, sessionPtr);
 
-    if (input == "exit" || input == "quit") {
+    if (input == "quit") {
       device_io::terminateKeyCaptureLoop();
       isRunning = false;
     }
@@ -62,9 +66,6 @@ static void getUserInput() {
 }
 
 int main() {
-  std::thread terminalWorker(getUserInput);
-  terminalWorker.detach();
-
   constexpr float SAMPLE_RATE = 48000.0f;
 
   // 1. Setup synth engine
@@ -100,6 +101,9 @@ int main() {
       synth_io::initSession(sessionConfig, sessionCallbacks, &engine);
 
   synth_io::startSession(session);
+
+  std::thread terminalWorker(getUserInput, std::ref(engine), session);
+  terminalWorker.detach();
 
   app_input::startKeyInputCapture(session);
 

@@ -98,20 +98,22 @@ int disposeSession(hSynthSession sessionPtr) {
 }
 
 // ==== Note Event Handlers ====
-void noteOn(hSynthSession sessionPtr, uint8_t midiNote, uint8_t velocity) {
+bool noteOn(hSynthSession sessionPtr, uint8_t midiNote, uint8_t velocity) {
   // TODO(nico): replicate emplace_back() to reduce copy;
-  sessionPtr->noteEventQueue.push({NoteEventType::NoteOn, midiNote, velocity});
+  return sessionPtr->noteEventQueue.push(
+      {NoteEventType::NoteOn, midiNote, velocity});
 }
 
-void noteOff(hSynthSession sessionPtr, uint8_t midiNote, uint8_t velocity) {
+bool noteOff(hSynthSession sessionPtr, uint8_t midiNote, uint8_t velocity) {
   // TODO(nico): replicate emplace_back() to reduce copy;
-  sessionPtr->noteEventQueue.push({NoteEventType::NoteOff, midiNote, velocity});
+  return sessionPtr->noteEventQueue.push(
+      {NoteEventType::NoteOff, midiNote, velocity});
 }
 
 // ==== Parameter Event Handlers ====
-void setParam(hSynthSession sessionPtr, uint8_t id, float value) {
+bool setParam(hSynthSession sessionPtr, uint8_t id, float value) {
   // TODO(nico): replicate emplace_back() to reduce copy;
-  sessionPtr->paramEventQueue.push({id, value});
+  return sessionPtr->paramEventQueue.push({id, value});
 }
 
 } // namespace synth_io

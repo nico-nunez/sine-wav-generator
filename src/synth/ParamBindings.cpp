@@ -4,6 +4,7 @@
 #include "Envelope.h"
 
 #include <cmath>
+#include <cstring>
 
 namespace synth::param_bindings {
 
@@ -190,6 +191,26 @@ void setParamValueByID(Engine &engine, ParamID id, float value,
 
   // Handle post-update logic for params with derived values (i.e. Envelopes)
   onParamUpdate(engine, id);
+}
+
+// String → ParamID (for parsing 'set' commands)
+ParamID findParamByName(const char *name) {
+  for (const auto &mapping : PARAM_NAMES) {
+    if (strcmp(mapping.name, name) == 0) {
+      return mapping.id;
+    }
+  }
+  return PARAM_COUNT; // Invalid/not found
+}
+
+// ParamID → String (for 'get' commands, help text, errors)
+const char *getParamName(ParamID id) {
+  for (const auto &mapping : PARAM_NAMES) {
+    if (mapping.id == id) {
+      return mapping.name;
+    }
+  }
+  return nullptr;
 }
 
 } // namespace synth::param_bindings

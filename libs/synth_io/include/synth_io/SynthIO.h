@@ -48,10 +48,10 @@ int stopSession(hSynthSession sessionPtr);
 int disposeSession(hSynthSession sessionPtr);
 
 // ==== Note Event Handlers ====
-void noteOn(hSynthSession sessionPtr, uint8_t midiNote, uint8_t velocity);
-void noteOff(hSynthSession sessionPtr, uint8_t midiNote, uint8_t velocity);
+bool noteOn(hSynthSession sessionPtr, uint8_t midiNote, uint8_t velocity);
+bool noteOff(hSynthSession sessionPtr, uint8_t midiNote, uint8_t velocity);
 
 // ==== Parameter Event Handlers ====
-void setParam(uint8_t id, float value);
+bool setParam(hSynthSession sessionPtr, uint8_t id, float value);
 
 } // namespace synth_io
