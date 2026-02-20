@@ -7,10 +7,10 @@ struct NoteEventQueue;
 struct SynthSession;
 } // namespace synth_io
 
-namespace app_input {
+namespace synth::utils {
 using hSynthSession = synth_io::SynthSession *;
 
 int startKeyInputCapture(hSynthSession);
 
 uint8_t asciiToMidi(char key);
-} // namespace app_input
+} // namespace synth::utils

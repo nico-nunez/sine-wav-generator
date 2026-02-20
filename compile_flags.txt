@@ -1,6 +1,7 @@
 -xc++
 -std=c++17
 -Isrc
+-Ilibs/dsp/include
 -Ilibs/audio_io/src
 -Ilibs/audio_io/include
 -Ilibs/device_io/include

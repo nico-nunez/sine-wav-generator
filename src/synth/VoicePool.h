@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Envelope.h"
+#include "Filters.h"
 #include "Oscillator.h"
 #include "Types.h"
 
@@ -27,6 +28,7 @@ struct VoicePoolConfig {
   OscConfig subOsc{SUB_OSC_DEFAULT};
 
   float masterGain = 1.0f;
+  float sampleRate = 48000.0f;
 };
 
 // VoicePool - top-level container (universal synth)
@@ -44,15 +46,14 @@ struct VoicePool {
   // TODO(nico) ==== Noise Generator ====
   // NoiseGenerator noise;
 
-  // ==== Envelopes (3 for flexibility) ====
+  // ==== Envelopes ====
   Envelope ampEnv;    // Amplitude envelope
   Envelope filterEnv; // Filter modulation
   Envelope modEnv;    // General-purpose modulation
 
-  // TODO(nico)
-  // // ==== Filters (2 for serial/parallel routing) ====
-  // Filter filter1;
-  // Filter filter2;
+  // ==== Filters ====
+  filters::SVFilter svf;
+  filters::LadderFilter ladder;
 
   // TODO(nico)
   // // ====  LFOs (3 for modulation) ====
@@ -72,6 +73,9 @@ struct VoicePool {
   float velocities[MAX_VOICES];     // Note-on velocity (0.0-1.0)
   uint32_t noteOnTimes[MAX_VOICES]; // NoteOn counter ( 1 is older than 2)
   uint8_t isActive[MAX_VOICES];     // 1 = active, 0 = free
+
+  float sampleRate;
+  float invSampleRate;
 
   // ==== Active voice tracking ====
   uint32_t activeCount = 0;

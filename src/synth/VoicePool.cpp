@@ -4,6 +4,7 @@
 #include "Types.h"
 
 #include "dsp/Effects.h"
+#include "synth/Filters.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -13,23 +14,35 @@ namespace synth::voices {
 VoicePool initVoicePool(const VoicePoolConfig &config) {
   VoicePool pool{};
 
+  pool.sampleRate = config.sampleRate;
+  pool.invSampleRate = 1.0f / config.sampleRate;
+
+  pool.masterGain = config.masterGain;
+
   oscillator::updateConfig(pool.osc1, config.osc1);
   oscillator::updateConfig(pool.osc2, config.osc2);
   oscillator::updateConfig(pool.osc3, config.osc3);
   oscillator::updateConfig(pool.subOsc, config.subOsc);
 
-  pool.masterGain = config.masterGain;
+  filters::updateSVFCoefficients(pool.svf, pool.invSampleRate);
+  filters::updateLadderCoefficient(pool.ladder, pool.invSampleRate);
 
   return pool;
 }
 
 void updateVoicePoolConfig(VoicePool &pool, const VoicePoolConfig &config) {
+  pool.sampleRate = config.sampleRate;
+  pool.invSampleRate = 1.0f / config.sampleRate;
+
+  pool.masterGain = config.masterGain;
+
   oscillator::updateConfig(pool.osc1, config.osc1);
   oscillator::updateConfig(pool.osc2, config.osc2);
   oscillator::updateConfig(pool.osc3, config.osc3);
   oscillator::updateConfig(pool.subOsc, config.subOsc);
 
-  pool.masterGain = config.masterGain;
+  filters::updateSVFCoefficients(pool.svf, pool.invSampleRate);
+  filters::updateLadderCoefficient(pool.ladder, pool.invSampleRate);
 }
 
 // Find free or oldest voice index for voice Initialization
@@ -93,6 +106,9 @@ void initializeVoice(VoicePool &pool, uint32_t voiceIndex, uint8_t midiNote,
   pool.noteOnTimes[voiceIndex] = noteOnTime;
   pool.velocities[voiceIndex] = velocity / 127.0f;
 
+  pool.sampleRate = sampleRate;
+  pool.invSampleRate = 1.0f / sampleRate;
+
   // ==== Initialize Oscillator 1 ====
   oscillator::initOscillator(pool.osc1, voiceIndex, midiNote, sampleRate);
 
@@ -114,6 +130,10 @@ void initializeVoice(VoicePool &pool, uint32_t voiceIndex, uint8_t midiNote,
 
   // Mod envelope
   envelope::initEnvelope(pool.modEnv, voiceIndex, sampleRate);
+
+  // ==== Initialize Filter States ====
+  filters::initSVFilter(pool.svf, voiceIndex);
+  filters::initLadderFilter(pool.ladder, voiceIndex);
 }
 
 uint32_t findVoiceRetrigger(VoicePool &pool, uint8_t midiNote) {
@@ -177,13 +197,14 @@ void processVoices(VoicePool &pool, float *output, size_t numSamples) {
 
       // ==== PROCESS ENVELOPES ====
       float ampEnv = envelope::processEnvelope(pool.ampEnv, voiceIndex);
-      // float filterEnv = processEnvelope(pool.filterEnv, voiceIndex);
+      float filterEnvVal =
+          envelope::processEnvelope(pool.filterEnv, voiceIndex);
 
-      // TODO(nico): Implement Filter
-      // ==== Process filters (with envelope modulation) ====
-      // float filtered = processFilter(pool.filter1, mixedOsc, idx, filterEnv);
-      // filtered = processFilter(pool.filter2, filtered, idx, 0.0f);
-      float filtered = mixedOsc;
+      // ==== PROCESS FILTERS ====
+      float filtered = filters::processSVFilter(
+          pool.svf, mixedOsc, voiceIndex, filterEnvVal, pool.invSampleRate);
+      filtered = filters::processLadderFilter(pool.ladder, filtered, voiceIndex,
+                                              filterEnvVal, pool.invSampleRate);
 
       // TODO(nico): Implement Saturator
       // ==== Apply saturation ====

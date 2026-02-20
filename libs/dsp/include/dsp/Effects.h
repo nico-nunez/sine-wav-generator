@@ -32,4 +32,19 @@ float tapeSimulation(float sample, float drive, float bias);
  * - 0.995 is a good default - cutoff around 3-5 Hz
  */
 float dcBlock(float sample, float &state, float coefficient = 0.995f);
+
+// ==== Alternatives ====
+// tanh — smooth, symmetric, expensive. The "classic" sound.
+float saturate_tanh(float x);
+
+// Algebraic soft clip — cheaper than tanh, slightly brighter character
+float saturate_soft(float x);
+
+// Polynomial tanh approximation — fast, tunable breakpoint
+float saturate_poly(float x);
+
+// Asymmetric — different compression on positive vs negative halves
+// Adds even harmonics (2nd, 4th) = "warmth", transistor-like
+float saturate_asymm(float x);
+
 } // namespace dsp::effects

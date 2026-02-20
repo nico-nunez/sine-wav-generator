@@ -1,5 +1,5 @@
-#include "Modulation.h"
-#include "Waveforms.h"
+#include "dsp/Modulation.h"
+#include "dsp/Waveforms.h"
 #include <cmath>
 
 namespace dsp::modulation {

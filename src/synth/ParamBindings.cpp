@@ -2,6 +2,7 @@
 
 #include "Engine.h"
 #include "Envelope.h"
+#include "synth/Filters.h"
 
 #include <cmath>
 #include <cstring>
@@ -47,6 +48,35 @@ ParamBinding makeParamBinding(WaveformType *ptr, int min, int max) {
   return binding;
 }
 
+ParamBinding makeParamBinding(SVFMode *ptr, int min, int max) {
+  ParamBinding binding;
+  binding.svfModePtr = ptr;
+  binding.type = FILTER_MODE;
+  binding.min = static_cast<float>(min);
+  binding.max = static_cast<float>(max);
+  return binding;
+}
+
+// Filter Bindings
+void bindSVFilter(ParamBinding *bindings, ParamID baseId,
+                  filters::SVFilter &filter) {
+  bindings[baseId + 0] = makeParamBinding(&filter.enabled);
+  bindings[baseId + 1] = makeParamBinding(&filter.mode, 0, 3); // LP/HP/BP/Notch
+  bindings[baseId + 2] = makeParamBinding(&filter.cutoff, 20.0f, 20000.0f);
+  bindings[baseId + 3] = makeParamBinding(&filter.resonance, 0.0f, 1.0f);
+  bindings[baseId + 4] = makeParamBinding(&filter.envAmount, -4.0f, 4.0f);
+}
+
+void bindLadderFilter(ParamBinding *bindings, ParamID baseId,
+                      filters::LadderFilter &filter) {
+  bindings[baseId + 0] = makeParamBinding(&filter.enabled);
+  bindings[baseId + 1] = makeParamBinding(&filter.cutoff, 20.0f, 20000.0f);
+  bindings[baseId + 2] = makeParamBinding(&filter.resonance, 0.0f, 1.0f);
+  bindings[baseId + 3] = makeParamBinding(&filter.drive, 1.0f, 10.0f);
+  bindings[baseId + 4] = makeParamBinding(&filter.envAmount, -4.0f, 4.0f);
+}
+
+// Oscillator Bindings
 void bindOscillator(ParamBinding *bindings, ParamID baseId,
                     oscillator::Oscillator &osc) {
   bindings[baseId + 0] = makeParamBinding(&osc.waveform, 0, 3);
@@ -56,7 +86,7 @@ void bindOscillator(ParamBinding *bindings, ParamID baseId,
   bindings[baseId + 4] = makeParamBinding(&osc.enabled);
 }
 
-// Bind one envelope's 4 params starting at baseId
+// Envelope Bindings
 void bindEnvelope(ParamBinding *bindings, ParamID baseId,
                   envelope::Envelope &env) {
   bindings[baseId + 0] = makeParamBinding(&env.attackMs, 0.0f, 10000.0f);
@@ -65,21 +95,35 @@ void bindEnvelope(ParamBinding *bindings, ParamID baseId,
   bindings[baseId + 3] = makeParamBinding(&env.releaseMs, 0.0f, 10000.0f);
 }
 
+// Handle updates to params with derived values
 void onParamUpdate(Engine &engine, ParamID id) {
   switch (id) {
+  // Update Amp Envelope on param changes
   case AMP_ENV_ATTACK:
   case AMP_ENV_DECAY:
   case AMP_ENV_RELEASE:
     envelope::updateIncrements(engine.voicePool.ampEnv, engine.sampleRate);
     break;
 
-    /* TODO(nico): Add filter/mod envelopes:
-     * case FILTER_ENV_ATTACK:
-     * case FILTER_ENV_DECAY:
-     * case FILTER_ENV_RELEASE:
-     *   envelope::updateIncrements(engine.voicePool.filterEnv,
-     *   engine.sampleRate); break;
-     */
+  // Update Filter Envelope on param changes
+  case FILTER_ENV_ATTACK:
+  case FILTER_ENV_DECAY:
+  case FILTER_ENV_RELEASE:
+    envelope::updateIncrements(engine.voicePool.filterEnv, engine.sampleRate);
+    break;
+
+  // Update Filter Coefficient(s) on param changes
+  case SVF_CUTOFF:
+  case SVF_RESONANCE:
+    filters::updateSVFCoefficients(engine.voicePool.svf,
+                                   engine.voicePool.invSampleRate);
+    break;
+
+  case LADDER_CUTOFF:
+  case LADDER_RESONANCE:
+    filters::updateLadderCoefficient(engine.voicePool.ladder,
+                                     engine.voicePool.invSampleRate);
+    break;
 
     // No special handling needed for other params like
     // Oscillator pitch params - no active voice updates (avoid clicks)
@@ -101,6 +145,14 @@ void initParamBindings(Engine &engine) {
 
   // Envelopes
   bindEnvelope(engine.paramBindings, AMP_ENV_ATTACK, engine.voicePool.ampEnv);
+  bindEnvelope(engine.paramBindings, FILTER_ENV_ATTACK,
+               engine.voicePool.filterEnv); // ← Add
+
+  // Filters
+  bindSVFilter(engine.paramBindings, SVF_ENABLED,
+               engine.voicePool.svf); // ← Add
+  bindLadderFilter(engine.paramBindings, LADDER_ENABLED,
+                   engine.voicePool.ladder);
 
   // Voice Pool
   engine.paramBindings[MASTER_GAIN] =
@@ -132,6 +184,10 @@ float getParamValueByID(const Engine &engine, ParamID id,
 
   case BOOL:
     value = *binding.boolPtr ? 1.0f : 0.0f;
+    break;
+
+  case FILTER_MODE:
+    value = static_cast<float>(static_cast<int>(*binding.svfModePtr));
     break;
 
   case WAVEFORM:
@@ -183,6 +239,11 @@ void setParamValueByID(Engine &engine, ParamID id, float value,
     *binding.boolPtr = value >= 0.5f;
     break;
 
+  case FILTER_MODE:
+    *binding.svfModePtr =
+        static_cast<filters::SVFMode>(static_cast<int>(std::round(value)));
+    break;
+
   case WAVEFORM:
     *binding.waveformPtr =
         static_cast<WaveformType>(static_cast<int>(std::round(value)));
@@ -213,4 +274,28 @@ const char *getParamName(ParamID id) {
   return nullptr;
 }
 
+bool isWaveFormParam(const char *paramName) {
+  for (auto &mapping : WAVEFORM_PARAMS) {
+    if (strcmp(mapping.name, paramName) == 0)
+      return true;
+  }
+  return false;
+}
+
+WaveformType getWaveformType(const char *inputValue) {
+  if (strcasecmp(inputValue, "sine") == 0)
+    return WaveformType::Sine;
+
+  if (strcasecmp(inputValue, "saw") == 0)
+    return WaveformType::Saw;
+
+  if (strcasecmp(inputValue, "square") == 0)
+    return WaveformType::Square;
+
+  if (strcasecmp(inputValue, "triangle") == 0)
+    return WaveformType::Triangle;
+
+  // default to Sine
+  return WaveformType::Sine;
+}
 } // namespace synth::param_bindings

@@ -1,4 +1,5 @@
-#include "Effects.h"
+#include "dsp/Effects.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -68,5 +69,22 @@ float dcBlock(float sample, float &state, float coefficient) {
   float output = sample - state;
   state = sample * (1.0f - coefficient) + state * coefficient;
   return output;
+}
+
+// tanh — smooth, symmetric, expensive. The "classic" sound.
+float saturate_tanh(float x) { return std::tanh(x); }
+
+// Algebraic soft clip — cheaper than tanh, slightly brighter character
+float saturate_soft(float x) { return x / (1.0f + std::abs(x)); }
+
+// Polynomial tanh approximation — fast, tunable breakpoint
+float saturate_poly(float x) {
+  return x * (27.0f + x * x) / (27.0f + 9.0f * x * x);
+}
+
+// Asymmetric — different compression on positive vs negative halves
+// Adds even harmonics (2nd, 4th) = "warmth", transistor-like
+float saturate_asymm(float x) {
+  return x > 0.0f ? std::tanh(x * 1.2f) : std::tanh(x * 0.8f);
 }
 } // namespace dsp::effects

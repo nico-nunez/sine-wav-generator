@@ -5,7 +5,7 @@ TARGET = main
 BUILD_DIR = build
 
 # Find all source files
-CPP_SOURCES = $(shell find src libs/audio_io/src libs/device_io/src libs/synth_io/src -name '*.cpp')
+CPP_SOURCES = $(shell find src libs/audio_io/src libs/device_io/src libs/synth_io/src libs/dsp/src -name '*.cpp')
 MM_SOURCES = $(shell find libs/device_io/src -name '*.mm')
 
 # Object files (in build directory)
@@ -14,9 +14,17 @@ MM_OBJECTS = $(patsubst %.mm,$(BUILD_DIR)/%.o,$(MM_SOURCES))
 ALL_OBJECTS = $(CPP_OBJECTS) $(MM_OBJECTS)
 
 # Add src/ to include search path
-INCLUDES = -Isrc -Ilibs/audio_io/include -Ilibs/audio_io/src -Ilibs/device_io/include -Ilibs/device_io/src -Ilibs/synth_io/include -Ilibs/synth_io/src
+INCLUDES = -Isrc -Ilibs/audio_io/include -Ilibs/audio_io/src \
+					 -Ilibs/device_io/include -Ilibs/device_io/src \
+					 -Ilibs/synth_io/include -Ilibs/synth_io/src \
+					 -Ilibs/dsp/include -Ilibs/dsp/src
 
-LDFLAGS = -framework CoreAudio -framework AudioToolbox -framework ApplicationServices -framework Cocoa -framework CoreMIDI -framework CoreFoundation
+LDFLAGS = -framework CoreAudio \
+					-framework AudioToolbox \
+					-framework ApplicationServices \
+					-framework Cocoa \
+					-framework CoreMIDI \
+					-framework CoreFoundation
 
 # Objective-C++ flags (subset of warnings, some don't apply well to ObjC++)
 OBJCXX_FLAGS = -std=c++17 -fobjc-arc -Wall -Wextra -Werror

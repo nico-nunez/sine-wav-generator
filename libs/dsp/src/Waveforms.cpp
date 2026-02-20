@@ -1,4 +1,6 @@
-#include "Waveforms.h"
+#include "dsp/Waveforms.h"
+#include "dsp/Math.h"
+
 #include <cmath>
 #include <cstdlib>
 
@@ -17,9 +19,7 @@ float polyBlep(float deltaTime) {
 }
 
 // Sine wave (band-limited as-is)
-float sine(float phase) {
-  return std::sin(phase * 2.0f * static_cast<float>(M_PI));
-}
+float sine(float phase) { return std::sin(phase * math::TWO_PI_F); }
 
 // NOTE:  using normalized phase results in a cool distorted sound
 float sineNormalized(float phase) { return std::sin(phase); }

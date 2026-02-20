@@ -1,4 +1,4 @@
-#include "Envelope.h"
+#include "dsp/Envelope.h"
 
 namespace dsp::envelopes {
 

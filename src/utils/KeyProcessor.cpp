@@ -1,18 +1,18 @@
 #include "KeyProcessor.h"
+#include "Logger.h"
 
+#include "synth_io/Events.h"
 #include "synth_io/SynthIO.h"
-#include "utils/Logger.h"
 
 #include "device_io/KeyCapture.h"
 #include "device_io/MidiCapture.h"
-#include "synth_io/Events.h"
 
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
 
-namespace app_input {
+namespace synth::utils {
 using MidiEvent = device_io::MidiEvent;
 
 using NoteEvent = synth_io::NoteEvent;
@@ -88,7 +88,7 @@ int startKeyInputCapture(hSynthSession sessionPtr) {
     }
 
     int srcIndex;
-    synth::utils::LogF("Enter midi device number: ");
+    LogF("Enter midi device number: ");
     std::cin >> srcIndex;
 
     midiSession = device_io::setupMidiSession({}, midiCallback, sessionPtr);
@@ -231,4 +231,4 @@ uint8_t asciiToMidi(char key) {
   return midiKey + (octiveOffset * SEMITONES);
 }
 
-} // namespace app_input
+} // namespace synth::utils

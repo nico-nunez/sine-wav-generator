@@ -1,8 +1,8 @@
 #include "_synth_old/Engine.h"
 #include "_synth_old/Oscillator.h"
 
-#include "app/InputProcessor.h"
-#include "app/KeyProcessor.h"
+#include "utils/InputProcessor.h"
+#include "utils/KeyProcessor.h"
 
 #include "device_io/KeyCapture.h"
 #include "dsp/Waveforms.h"
@@ -56,7 +56,7 @@ static void getUserInput(synth::Engine &engine,
     printf(">");
     std::getline(std::cin, input);
 
-    synth::input_proc::parseCommand(input, engine, sessionPtr);
+    synth::utils::parseCommand(input, engine, sessionPtr);
 
     if (input == "quit") {
       device_io::terminateKeyCaptureLoop();
@@ -105,7 +105,7 @@ int main() {
   std::thread terminalWorker(getUserInput, std::ref(engine), session);
   terminalWorker.detach();
 
-  app_input::startKeyInputCapture(session);
+  synth::utils::startKeyInputCapture(session);
 
   /* This currently unreachable on MacOS due to `terminal:nil` being called
    * in `stopKeyCaptureLoop()` and immediately exits app.
