@@ -76,7 +76,7 @@ enum ParamValueFormat {
   DENORMALIZED,
 };
 
-enum ParamStorageType { FLOAT, INT8, BOOL, WAVEFORM, FILTER_MODE };
+enum ParamValueType { FLOAT, INT8, BOOL, WAVEFORM, FILTER_MODE };
 
 struct ParamBinding {
   union {
@@ -86,78 +86,74 @@ struct ParamBinding {
     SVFMode *svfModePtr;
     WaveformType *waveformPtr;
   };
-  ParamStorageType type;
+  ParamValueType type;
   float min, max;
 };
 
 // ==== Param Parsing ====
-struct ParamNameMapping {
-  const char *name;
+struct ParamMapping {
   ParamID id;
+  const char *name;
+  ParamValueType type;
 };
 
 // Used to find input param names
-constexpr ParamNameMapping PARAM_NAMES[] = {
-    {"osc1.waveform", OSC1_WAVEFORM},
-    {"osc1.mixLevel", OSC1_MIX_LEVEL},
-    {"osc1.detune", OSC1_DETUNE_AMOUNT},
-    {"osc1.octave", OSC1_OCTAVE_OFFSET},
-    {"osc1.enabled", OSC1_ENABLED},
+constexpr ParamMapping PARAM_NAMES[] = {
+    {OSC1_WAVEFORM, "osc1.waveform", ParamValueType::WAVEFORM},
+    {OSC1_MIX_LEVEL, "osc1.mixLevel", ParamValueType::FLOAT},
+    {OSC1_DETUNE_AMOUNT, "osc1.detune", ParamValueType::FLOAT},
+    {OSC1_OCTAVE_OFFSET, "osc1.octave", ParamValueType::INT8},
+    {OSC1_ENABLED, "osc1.enabled", ParamValueType::BOOL},
 
-    {"osc2.waveform", OSC2_WAVEFORM},
-    {"osc2.mixLevel", OSC2_MIX_LEVEL},
-    {"osc2.detune", OSC2_DETUNE_AMOUNT},
-    {"osc2.octave", OSC2_OCTAVE_OFFSET},
-    {"osc2.enabled", OSC2_ENABLED},
+    {OSC2_WAVEFORM, "osc2.waveform", ParamValueType::WAVEFORM},
+    {OSC2_MIX_LEVEL, "osc2.mixLevel", ParamValueType::FLOAT},
+    {OSC2_DETUNE_AMOUNT, "osc2.detune", ParamValueType::FLOAT},
+    {OSC2_OCTAVE_OFFSET, "osc2.octave", ParamValueType::INT8},
+    {OSC2_ENABLED, "osc2.enabled", ParamValueType::BOOL},
 
-    {"osc3.waveform", OSC3_WAVEFORM},
-    {"osc3.mixLevel", OSC3_MIX_LEVEL},
-    {"osc3.detune", OSC3_DETUNE_AMOUNT},
-    {"osc3.octave", OSC3_OCTAVE_OFFSET},
-    {"osc3.enabled", OSC3_ENABLED},
+    {OSC3_WAVEFORM, "osc3.waveform", ParamValueType::WAVEFORM},
+    {OSC3_MIX_LEVEL, "osc3.mixLevel", ParamValueType::FLOAT},
+    {OSC3_DETUNE_AMOUNT, "osc3.detune", ParamValueType::FLOAT},
+    {OSC3_OCTAVE_OFFSET, "osc3.octave", ParamValueType::INT8},
+    {OSC3_ENABLED, "osc3.enabled", ParamValueType::BOOL},
 
-    {"subOsc.waveform", SUB_OSC_WAVEFORM},
-    {"subOsc.mixLevel", SUB_OSC_MIX_LEVEL},
-    {"subOsc.detune", SUB_OSC_DETUNE_AMOUNT},
-    {"subOsc.octave", SUB_OSC_OCTAVE_OFFSET},
-    {"subOsc.enabled", SUB_OSC_ENABLED},
+    {SUB_OSC_WAVEFORM, "subOsc.waveform", ParamValueType::WAVEFORM},
+    {SUB_OSC_MIX_LEVEL, "subOsc.mixLevel", ParamValueType::FLOAT},
+    {SUB_OSC_DETUNE_AMOUNT, "subOsc.detune", ParamValueType::FLOAT},
+    {SUB_OSC_OCTAVE_OFFSET, "subOsc.octave", ParamValueType::INT8},
+    {SUB_OSC_ENABLED, "subOsc.enabled", ParamValueType::BOOL},
 
-    {"ampEnv.attack", AMP_ENV_ATTACK},
-    {"ampEnv.decay", AMP_ENV_DECAY},
-    {"ampEnv.sustain", AMP_ENV_SUSTAIN_LEVEL},
-    {"ampEnv.release", AMP_ENV_RELEASE},
+    {AMP_ENV_ATTACK, "ampEnv.attack", ParamValueType::FLOAT},
+    {AMP_ENV_DECAY, "ampEnv.decay", ParamValueType::FLOAT},
+    {AMP_ENV_SUSTAIN_LEVEL, "ampEnv.sustain", ParamValueType::FLOAT},
+    {AMP_ENV_RELEASE, "ampEnv.release", ParamValueType::FLOAT},
 
-    {"svf.enabled", SVF_ENABLED},
-    {"svf.mode", SVF_MODE},
-    {"svf.cutoff", SVF_CUTOFF},
-    {"svf.resonance", SVF_RESONANCE},
-    {"svf.envAmount", SVF_ENV_AMOUNT},
+    {SVF_MODE, "svf.mode", ParamValueType::FILTER_MODE},
+    {SVF_CUTOFF, "svf.cutoff", ParamValueType::FLOAT},
+    {SVF_RESONANCE, "svf.resonance", ParamValueType::FLOAT},
+    {SVF_ENV_AMOUNT, "svf.envAmount", ParamValueType::FLOAT},
+    {SVF_ENABLED, "svf.enabled", ParamValueType::BOOL},
 
-    {"ladder.enabled", LADDER_ENABLED},
-    {"ladder.cutoff", LADDER_CUTOFF},
-    {"ladder.resonance", LADDER_RESONANCE},
-    {"ladder.drive", LADDER_DRIVE},
-    {"ladder.envAmount", LADDER_ENV_AMOUNT},
+    {LADDER_CUTOFF, "ladder.cutoff", ParamValueType::FLOAT},
+    {LADDER_RESONANCE, "ladder.resonance", ParamValueType::FLOAT},
+    {LADDER_DRIVE, "ladder.drive", ParamValueType::FLOAT},
+    {LADDER_ENV_AMOUNT, "ladder.envAmount", ParamValueType::FLOAT},
+    {LADDER_ENABLED, "ladder.enabled", ParamValueType::BOOL},
 
-    {"filterEnv.attack", FILTER_ENV_ATTACK},
-    {"filterEnv.decay", FILTER_ENV_DECAY},
-    {"filterEnv.sustain", FILTER_ENV_SUSTAIN_LEVEL},
-    {"filterEnv.release", FILTER_ENV_RELEASE},
+    {FILTER_ENV_ATTACK, "filterEnv.attack", ParamValueType::FLOAT},
+    {FILTER_ENV_DECAY, "filterEnv.decay", ParamValueType::FLOAT},
+    {FILTER_ENV_SUSTAIN_LEVEL, "filterEnv.sustain", ParamValueType::FLOAT},
+    {FILTER_ENV_RELEASE, "filterEnv.release", ParamValueType::FLOAT},
 
-    {"master.gain", MASTER_GAIN},
+    {MASTER_GAIN, "master.gain", ParamValueType::FLOAT},
+
 };
+
+inline constexpr ParamMapping PARAM_MAPPING_NOT_FOUND{PARAM_COUNT, "not.found",
+                                                      ParamValueType::BOOL};
+
 inline constexpr size_t PARAM_NAME_COUNT =
     sizeof(PARAM_NAMES) / sizeof(PARAM_NAMES[0]);
-
-// Used to check if input param value should be WaveformType
-constexpr ParamNameMapping WAVEFORM_PARAMS[] = {
-    {"osc1.waveform", OSC1_WAVEFORM},
-    {"osc2.waveform", OSC2_WAVEFORM},
-    {"osc3.waveform", OSC3_WAVEFORM},
-    {"subOsc.waveform", SUB_OSC_WAVEFORM},
-};
-inline constexpr size_t WAVEFORM_PARAM_COUNT =
-    sizeof(WAVEFORM_PARAMS) / sizeof(WAVEFORM_PARAMS[0]);
 
 // ==== API Methods ====
 void initParamBindings(synth::Engine &engine);
@@ -171,11 +167,11 @@ void setParamValueByID(
     ParamValueFormat valueFormat = ParamValueFormat::DENORMALIZED);
 
 // String parsing helpers
-ParamID findParamByName(const char *name);
+ParamMapping findParamByName(const char *name);
 const char *getParamName(ParamID id);
 
-// Helpers for parsing waveform type param values
-bool isWaveFormParam(const char *paramName);
+// Helpers for dealing with param values that are strings
+SVFMode getSVFModeType(const char *inputValue);
 WaveformType getWaveformType(const char *inputValue);
 
 } // namespace synth::param_bindings

@@ -28,33 +28,54 @@ int setInputParam(std::istringstream &iss, s_io::hSynthSession session) {
 
   iss >> paramName;
 
+  pb::ParamMapping param = pb::findParamByName(paramName.c_str());
+  if (param.id == param_bindings::PARAM_COUNT) {
+    printf("Error: Unknown parameter '%s'\n", paramName.c_str());
+    return 1;
+  }
+
   // Check if param is setting waveformType (string)
-  if (pb::isWaveFormParam(paramName.c_str())) {
+  switch (param.type) {
+  // Set Oscillator Waveform
+  case pb::ParamValueType::WAVEFORM: {
     std::string value;
     iss >> value;
 
     auto waveformType = pb::getWaveformType(value.c_str());
     paramValue = static_cast<float>(waveformType);
 
-  } else {
-    // All other params values are floats (denormalized)
-    iss >> paramValue;
-  }
+  } break;
 
-  pb::ParamID id = pb::findParamByName(paramName.c_str());
-  if (id == param_bindings::PARAM_COUNT) {
-    printf("Error: Unknown parameter '%s'\n", paramName.c_str());
-    return 1;
+  // Enable/Disable Item
+  case pb::ParamValueType::BOOL: {
+    std::string value;
+    iss >> value;
+
+    paramValue = strcasecmp(value.c_str(), "true") == 0 ? 1.0f : 0.0f;
+
+  } break;
+
+  // Set SVF Mode
+  case pb::ParamValueType::FILTER_MODE: {
+    std::string value;
+    iss >> value;
+
+    auto filterMode = pb::getSVFModeType(value.c_str());
+    paramValue = static_cast<float>(filterMode);
+
+  } break;
+
+  // Treat all other params values as floats (denormalized)
+  default:
+    iss >> paramValue;
   }
 
   /*
    * NOTE(nico): User is entering denormalized value and param is stored
    * denormalized.  May consider normalizing in the future, but seems
    * pointless at this time.
-   *
-   * Except for WaveformType.  need to handle that case
    */
-  if (!s_io::setParam(session, static_cast<uint8_t>(id), paramValue)) {
+  if (!s_io::setParam(session, static_cast<uint8_t>(param.id), paramValue)) {
     printf("Warning: Param queue full, event dropped\n");
     return 2;
   }
@@ -103,13 +124,13 @@ void parseCommand(const std::string &line, Engine &engine,
     std::string paramName;
     iss >> paramName;
 
-    pb::ParamID id = pb::findParamByName(paramName.c_str());
-    if (id == param_bindings::PARAM_COUNT) {
+    pb::ParamMapping param = pb::findParamByName(paramName.c_str());
+    if (param.id == param_bindings::PARAM_COUNT) {
       printf("Error: Unknown parameter '%s'\n", paramName.c_str());
       return;
     }
 
-    float rawValue = pb::getParamValueByID(engine, id);
+    float rawValue = pb::getParamValueByID(engine, param.id);
 
     printf("%s = %.2f\n", paramName.c_str(), rawValue);
 

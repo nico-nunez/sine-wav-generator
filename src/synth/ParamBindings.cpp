@@ -255,13 +255,13 @@ void setParamValueByID(Engine &engine, ParamID id, float value,
 }
 
 // String → ParamID (for parsing 'set' commands)
-ParamID findParamByName(const char *name) {
+ParamMapping findParamByName(const char *name) {
   for (const auto &mapping : PARAM_NAMES) {
     if (strcmp(mapping.name, name) == 0) {
-      return mapping.id;
+      return mapping;
     }
   }
-  return PARAM_COUNT; // Invalid/not found
+  return PARAM_MAPPING_NOT_FOUND;
 }
 
 // ParamID → String (for 'get' commands, help text, errors)
@@ -274,13 +274,22 @@ const char *getParamName(ParamID id) {
   return nullptr;
 }
 
-bool isWaveFormParam(const char *paramName) {
-  for (auto &mapping : WAVEFORM_PARAMS) {
-    if (strcmp(mapping.name, paramName) == 0)
-      return true;
-  }
-  return false;
-}
+SVFMode getSVFModeType(const char *inputValue) {
+  if (strcasecmp(inputValue, "bp") == 0)
+    return filters::SVFMode::BP;
+
+  if (strcasecmp(inputValue, "hp") == 0)
+    return filters::SVFMode::HP;
+
+  if (strcasecmp(inputValue, "lp") == 0)
+    return filters::SVFMode::LP;
+
+  if (strcasecmp(inputValue, "notch") == 0)
+    return filters::SVFMode::Notch;
+
+  // default to Sine
+  return filters::SVFMode::LP;
+};
 
 WaveformType getWaveformType(const char *inputValue) {
   if (strcasecmp(inputValue, "sine") == 0)
