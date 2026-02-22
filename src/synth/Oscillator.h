@@ -43,6 +43,12 @@ void initOscillator(Oscillator &osc, uint32_t voiceIndex, uint8_t midiNote,
                     float sampleRate);
 
 void incrementPhase(Oscillator &osc, uint32_t voiceIndex);
+
+// Original - pre Mod Matrix and acts as pass-through
 float processOscillator(Oscillator &osc, uint32_t voiceIndex);
+
+// Mod Matrix version allowing pitch modulation (called/returned via original)
+float processOscillator(Oscillator &osc, uint32_t voiceIndex,
+                        float phaseIncrement);
 
 } // namespace synth::oscillator

@@ -6,6 +6,7 @@
 #include "Types.h"
 
 #include "dsp/Waveforms.h"
+#include "synth/ModMatrix.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -17,6 +18,8 @@ using Envelope = envelope::Envelope;
 
 using OscConfig = oscillator::OscConfig;
 using Oscillator = oscillator::Oscillator;
+
+using ModMatrix = mod_matrix::ModMatrix;
 
 static constexpr OscConfig SUB_OSC_DEFAULT = {WaveformType::Sine, 0.5f, -2,
                                               0.0f, true};
@@ -45,6 +48,8 @@ struct VoicePool {
 
   // TODO(nico) ==== Noise Generator ====
   // NoiseGenerator noise;
+
+  ModMatrix modMatrix;
 
   // ==== Envelopes ====
   Envelope ampEnv;    // Amplitude envelope

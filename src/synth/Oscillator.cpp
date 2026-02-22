@@ -83,6 +83,20 @@ float processOscillator(Oscillator &osc, uint32_t voiceIndex) {
   return sample;
 }
 
+float processOscillator(Oscillator &osc, uint32_t voiceIndex,
+                        float phaseIncrement) {
+  float sample = dsp::waveforms::processWaveform(
+                     osc.waveform, osc.phases[voiceIndex], phaseIncrement) *
+                 osc.mixLevel;
+
+  // Advance using the modulated increment, not the stored one
+  osc.phases[voiceIndex] += phaseIncrement;
+  if (osc.phases[voiceIndex] >= 1.0f)
+    osc.phases[voiceIndex] -= 1.0f;
+
+  return sample;
+}
+
 // Helper for updating global settings
 void updateConfig(Oscillator &osc, const OscConfig &config) {
   if (osc.detuneAmount != config.detuneAmount)

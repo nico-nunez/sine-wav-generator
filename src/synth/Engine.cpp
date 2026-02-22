@@ -4,7 +4,9 @@
 
 #include "synth_io/Events.h"
 
+#include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <cstdio>
 
 namespace synth {
@@ -40,7 +42,20 @@ void Engine::processNoteEvent(const synth_io::NoteEvent &event) {
 
 void Engine::processAudioBlock(float **outputBuffer, size_t numChannels,
                                size_t numFrames) {
-  voices::processVoices(voicePool, poolBuffer, numFrames);
+  /* NOTE(nico): Use internal Engine block size to allow processing of
+   * expensive calculation that need to occur more often than once per audio
+   * buffer block but NOT on every sample either.  E.g. Modulation
+   *
+   * TODO(nico): mess with ENGINE_BLOCK_SIZE value (currently 64) to see
+   * how it effects things
+   */
+  uint32_t offset = 0;
+  while (offset < numFrames) {
+    uint32_t blockSize =
+        std::min(ENGINE_BLOCK_SIZE, static_cast<uint32_t>(numFrames) - offset);
+    voices::processVoices(voicePool, poolBuffer + offset, blockSize);
+    offset += blockSize;
+  }
 
   for (size_t frame = 0; frame < numFrames; frame++) {
     for (size_t ch = 0; ch < numChannels; ch++) {

@@ -83,25 +83,6 @@ int setInputParam(std::istringstream &iss, s_io::hSynthSession session) {
   return 0;
 }
 
-// List params
-void printParamList(const char *optionalParam) {
-  if (optionalParam) {
-
-    printf("Available parameters for: %s\n", optionalParam);
-    for (const auto &mapping : param_bindings::PARAM_NAMES) {
-      if (strstr(mapping.name, optionalParam) != NULL)
-        printf("  %s\n", mapping.name);
-    }
-
-  } else {
-
-    printf("Available parameters:\n");
-    for (const auto &mapping : param_bindings::PARAM_NAMES) {
-      printf("  %s\n", mapping.name);
-    }
-  }
-}
-
 } // namespace
 
 void parseCommand(const std::string &line, Engine &engine,
@@ -140,7 +121,7 @@ void parseCommand(const std::string &line, Engine &engine,
     std::string optionalParam;
     iss >> optionalParam;
 
-    printParamList(optionalParam.c_str());
+    pb::printParamList(optionalParam.empty() ? nullptr : optionalParam.c_str());
 
     // HELP: print available commands
   } else if (cmd == "help") {

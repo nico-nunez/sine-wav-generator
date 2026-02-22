@@ -5,6 +5,7 @@
 #include "synth/Filters.h"
 
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 
 namespace synth::param_bindings {
@@ -64,7 +65,7 @@ void bindSVFilter(ParamBinding *bindings, ParamID baseId,
   bindings[baseId + 1] = makeParamBinding(&filter.mode, 0, 3); // LP/HP/BP/Notch
   bindings[baseId + 2] = makeParamBinding(&filter.cutoff, 20.0f, 20000.0f);
   bindings[baseId + 3] = makeParamBinding(&filter.resonance, 0.0f, 1.0f);
-  bindings[baseId + 4] = makeParamBinding(&filter.envAmount, -4.0f, 4.0f);
+  // bindings[baseId + 4] = makeParamBinding(&filter.envAmount, -4.0f, 4.0f);
 }
 
 void bindLadderFilter(ParamBinding *bindings, ParamID baseId,
@@ -73,7 +74,7 @@ void bindLadderFilter(ParamBinding *bindings, ParamID baseId,
   bindings[baseId + 1] = makeParamBinding(&filter.cutoff, 20.0f, 20000.0f);
   bindings[baseId + 2] = makeParamBinding(&filter.resonance, 0.0f, 1.0f);
   bindings[baseId + 3] = makeParamBinding(&filter.drive, 1.0f, 10.0f);
-  bindings[baseId + 4] = makeParamBinding(&filter.envAmount, -4.0f, 4.0f);
+  //  bindings[baseId + 4] = makeParamBinding(&filter.envAmount, -4.0f, 4.0f);
 }
 
 // Oscillator Bindings
@@ -146,11 +147,10 @@ void initParamBindings(Engine &engine) {
   // Envelopes
   bindEnvelope(engine.paramBindings, AMP_ENV_ATTACK, engine.voicePool.ampEnv);
   bindEnvelope(engine.paramBindings, FILTER_ENV_ATTACK,
-               engine.voicePool.filterEnv); // ← Add
+               engine.voicePool.filterEnv);
 
   // Filters
-  bindSVFilter(engine.paramBindings, SVF_ENABLED,
-               engine.voicePool.svf); // ← Add
+  bindSVFilter(engine.paramBindings, SVF_ENABLED, engine.voicePool.svf);
   bindLadderFilter(engine.paramBindings, LADDER_ENABLED,
                    engine.voicePool.ladder);
 
@@ -272,6 +272,24 @@ const char *getParamName(ParamID id) {
     }
   }
   return nullptr;
+}
+
+// Print parameter options
+void printParamList(const char *optionalParam) {
+  if (optionalParam != nullptr) {
+    printf("Available parameters for: %s\n", optionalParam);
+    for (const auto &mapping : PARAM_NAMES) {
+      if (strstr(mapping.name, optionalParam) != NULL)
+        printf("  %s\n", mapping.name);
+    }
+
+  } else {
+
+    printf("Available parameters:\n");
+    for (const auto &mapping : PARAM_NAMES) {
+      printf("  %s\n", mapping.name);
+    }
+  }
 }
 
 SVFMode getSVFModeType(const char *inputValue) {

@@ -30,7 +30,7 @@ struct SVFCoeffs {
   float k; // damping = 1/Q
 };
 
-SVFCoeffs computeSVFCoeffs(float cutoff, float Q, float sampleRate);
+SVFCoeffs computeSVFCoeffs(float cutoff, float Q, float invSampleRate);
 SVFOutputs processSVF(float input, const SVFCoeffs &c, SVFState &s);
 
 // ==== Ladder Filter (Moog style) ====

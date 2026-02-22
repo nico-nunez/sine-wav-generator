@@ -9,13 +9,8 @@ namespace synth::filters {
 // ==== Internal Helpers ====
 namespace {
 
-float computeEffectiveCutoff(float baseCutoff, float envAmount,
-                             float filterEnvVal) {
-  // Octave-based modulation: musically linear, consistent across the frequency
-  // range envAmount in octaves (e.g. +3.0 = three octaves above baseCutoff at
-  // full envelope)
-  float octaveShift = envAmount * filterEnvVal;
-  return baseCutoff * std::exp2f(octaveShift);
+float computeEffectiveCutoff(float baseCutoff, float cutoffModOctaves) {
+  return baseCutoff * dsp::math::fastExp2(cutoffModOctaves);
 }
 
 } // namespace
@@ -42,18 +37,18 @@ void updateSVFCoefficients(SVFilter &filter, float invSampleRate) {
 }
 
 float processSVFilter(SVFilter &filter, float input, uint32_t voiceIndex,
-                      float filterEnvVal, float sampleRate) {
+                      float cutoffModOctaves, float invSampleRate) {
   if (!filter.enabled)
     return input;
 
-  float modCutoff =
-      computeEffectiveCutoff(filter.cutoff, filter.envAmount, filterEnvVal);
+  float modCutoff = computeEffectiveCutoff(filter.cutoff, cutoffModOctaves);
 
+  // TODO(nico): is this correct (filterEnvVal -> cutoffModOctaves)
   // Use cached coeffs when envelope is idle, recompute when active
   SVFCoeffs c =
-      (filterEnvVal > 0.001f)
+      (cutoffModOctaves > 0.001f)
           ? dsp::filters::computeSVFCoeffs(
-                modCutoff, 0.5f + filter.resonance * 20.0f, sampleRate)
+                modCutoff, 0.5f + filter.resonance * 20.0f, invSampleRate)
           : filter.coeffs;
 
   SVFOutputs out =
@@ -92,15 +87,17 @@ void updateLadderCoefficient(LadderFilter &filter, float invSampleRate) {
 }
 
 float processLadderFilter(LadderFilter &filter, float input,
-                          uint32_t voiceIndex, float filterEnvVal,
+                          uint32_t voiceIndex, float cutoffModOctaves,
                           float invSampleRate) {
   if (!filter.enabled)
     return input;
 
-  float modCutoff =
-      computeEffectiveCutoff(filter.cutoff, filter.envAmount, filterEnvVal);
+  float modCutoff = computeEffectiveCutoff(filter.cutoff, cutoffModOctaves);
+
+  // TODO(nico): is this correct (filterEnvVal -> cutoffModOctaves)
+  // Use cached coeffs when envelope is idle, recompute when active
   float coeff =
-      (filterEnvVal > 0.001f)
+      (cutoffModOctaves > 0.001f)
           ? 2.0f * std::sin(dsp::math::PI_F * modCutoff * invSampleRate)
           : filter.coeff;
 

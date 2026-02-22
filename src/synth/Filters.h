@@ -26,7 +26,6 @@ struct SVFilter {
   SVFMode mode = SVFMode::LP;
   float cutoff = 1000.0f; // Hz
   float resonance = 0.5f; // 0.0–1.0 (mapped to Q internally)
-  float envAmount = 0.0f; // Octaves of cutoff modulation (bipolar, e.g. ±4.0)
   bool enabled = false;
 };
 
@@ -44,7 +43,6 @@ struct LadderFilter {
   float resonance = 0.3f; // 0.0–1.0 (mapped to 0–4 internally)
   float drive =
       1.0f; // 1.0 = neutral, higher = more saturation (nonlinear path)
-  float envAmount = 0.0f; // Octaves of cutoff modulation (bipolar)
   bool enabled = false;
 };
 
@@ -56,7 +54,7 @@ void initSVFilter(SVFilter &filter, size_t voiceIndex);
 void updateSVFCoefficients(SVFilter &filter, float invSampleRate);
 
 float processSVFilter(SVFilter &filter, float input, uint32_t voiceIndex,
-                      float filterEnvVal, float sampleRate);
+                      float cutoffModOctaves, float invSampleRate);
 
 // ==== Ladder Helpers ====
 void initLadderFilter(LadderFilter &filter, size_t voiceIndex);
@@ -64,7 +62,7 @@ void initLadderFilter(LadderFilter &filter, size_t voiceIndex);
 void updateLadderCoefficient(LadderFilter &filter, float invSampleRate);
 
 float processLadderFilter(LadderFilter &filter, float input,
-                          uint32_t voiceIndex, float filterEnvVal,
-                          float sampleRate);
+                          uint32_t voiceIndex, float cutoffModOctaves,
+                          float invSampleRate);
 
 } // namespace synth::filters

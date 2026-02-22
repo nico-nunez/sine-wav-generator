@@ -3,13 +3,34 @@
 #include "Oscillator.h"
 #include "Types.h"
 
-#include "dsp/Effects.h"
 #include "synth/Filters.h"
+#include "synth/ModMatrix.h"
+
+#include "dsp/Effects.h"
+#include "dsp/Math.h"
 
 #include <cstddef>
 #include <cstdint>
 
 namespace synth::voices {
+using ModSrc = mod_matrix::ModSrc;
+using ModDest = mod_matrix::ModDest;
+using ModDest2D = mod_matrix::ModDest2D;
+using ModRoute = mod_matrix::ModRoute;
+
+// ===== Internal Helpers ====
+namespace {
+float interpolatePitchInc(Oscillator &osc, ModMatrix &matrix, ModDest dest,
+                          uint32_t voiceIndex, uint32_t sampleNum) {
+  float pitchMod =
+      matrix.prevDestValues[dest][voiceIndex] +
+      (matrix.destStepValues[dest][voiceIndex] * static_cast<float>(sampleNum));
+
+  return osc.phaseIncrements[voiceIndex] *
+         dsp::math::semitonesToFreqRatio(pitchMod);
+}
+
+} // namespace
 
 VoicePool initVoicePool(const VoicePoolConfig &config) {
   VoicePool pool{};
@@ -27,6 +48,10 @@ VoicePool initVoicePool(const VoicePoolConfig &config) {
   filters::updateSVFCoefficients(pool.svf, pool.invSampleRate);
   filters::updateLadderCoefficient(pool.ladder, pool.invSampleRate);
 
+  mod_matrix::addRoute(pool.modMatrix, ModSrc::FilterEnv, ModDest::SVFCutoff,
+                       0.0f);
+  mod_matrix::addRoute(pool.modMatrix, ModSrc::FilterEnv, ModDest::LadderCutoff,
+                       0.0f);
   return pool;
 }
 
@@ -79,6 +104,7 @@ void addActiveIndex(VoicePool &pool, uint32_t voiceIndex) {
   pool.activeCount++;
 }
 
+// TODO(nico): this is confusing.  there must be a better way
 void removeInactiveIndex(VoicePool &pool, uint32_t voiceIndex) {
   uint32_t removeIndex = pool.activeCount; // out of range of active
 
@@ -100,7 +126,7 @@ void removeInactiveIndex(VoicePool &pool, uint32_t voiceIndex) {
 
 void initializeVoice(VoicePool &pool, uint32_t voiceIndex, uint8_t midiNote,
                      float velocity, uint32_t noteOnTime, float sampleRate) {
-  // === Set Metadata ===
+  // ==== Set Metadata ====
   pool.isActive[voiceIndex] = 1;
   pool.midiNotes[voiceIndex] = midiNote;
   pool.noteOnTimes[voiceIndex] = noteOnTime;
@@ -108,6 +134,12 @@ void initializeVoice(VoicePool &pool, uint32_t voiceIndex, uint8_t midiNote,
 
   pool.sampleRate = sampleRate;
   pool.invSampleRate = 1.0f / sampleRate;
+
+  // ==== Reset Modulation Destination Values ====
+  for (int d = 0; d < ModDest::DEST_COUNT; d++) {
+    pool.modMatrix.prevDestValues[d][voiceIndex] = 0.0f;
+    pool.modMatrix.destValues[d][voiceIndex] = 0.0f;
+  }
 
   // ==== Initialize Oscillator 1 ====
   oscillator::initOscillator(pool.osc1, voiceIndex, midiNote, sampleRate);
@@ -179,6 +211,60 @@ void releaseVoice(VoicePool &pool, uint8_t midiNote) {
 }
 
 void processVoices(VoicePool &pool, float *output, size_t numSamples) {
+  float invNumSamples = 1.0f / static_cast<float>(numSamples);
+
+  mod_matrix::clearModDestSteps(pool.modMatrix);
+
+  /* ==== Pre-pass: once per block, once per active voice ====
+   * Advance block-rate envelopes (filterEnv, modEnv).
+   * ampEnv is NOT advanced here; it runs per-sample in the hot loop below.
+   * =====================================================================
+   */
+  for (uint32_t i = pool.activeCount; i > 0; i--) {
+    uint32_t voiceIndex = pool.activeIndices[i - 1];
+
+    // Set initial modulation source values
+    float modSrcs[ModSrc::SRC_COUNT] = {};
+
+    modSrcs[ModSrc::AmpEnv] =
+        pool.ampEnv.levels[voiceIndex]; // processed in main loop
+
+    modSrcs[ModSrc::FilterEnv] =
+        envelope::processEnvelope(pool.filterEnv, voiceIndex);
+
+    modSrcs[ModSrc::ModEnv] =
+        envelope::processEnvelope(pool.modEnv, voiceIndex);
+
+    modSrcs[ModSrc::Velocity] = pool.velocities[voiceIndex];
+
+    // Accumulate mod destinations
+    float modDests[ModDest::DEST_COUNT] = {};
+
+    for (uint8_t r = 0; r < pool.modMatrix.count; r++) {
+      const ModRoute &route = pool.modMatrix.routes[r];
+
+      if (route.src == ModSrc::NoSrc || route.dest == ModDest::NoDest)
+        continue;
+
+      modDests[route.dest] += modSrcs[route.src] * route.amount;
+    }
+
+    // Set modulation destination values
+    for (int d = 0; d < ModDest::DEST_COUNT; d++)
+      pool.modMatrix.destValues[d][voiceIndex] = modDests[d];
+
+    // Interpolation setup for fast destinations (pitch)
+    mod_matrix::setModDestStep(pool.modMatrix, ModDest::Osc1Pitch, voiceIndex,
+                               invNumSamples);
+    mod_matrix::setModDestStep(pool.modMatrix, ModDest::Osc2Pitch, voiceIndex,
+                               invNumSamples);
+    mod_matrix::setModDestStep(pool.modMatrix, ModDest::Osc3Pitch, voiceIndex,
+                               invNumSamples);
+    mod_matrix::setModDestStep(pool.modMatrix, ModDest::SubOscPitch, voiceIndex,
+                               invNumSamples);
+  }
+
+  // ==== Main Loop: Calculate each sample value (process block) ====
   for (uint32_t s = 0; s < numSamples; s++) {
     float sample = 0.0f;
 
@@ -187,28 +273,47 @@ void processVoices(VoicePool &pool, float *output, size_t numSamples) {
     for (uint32_t i = pool.activeCount; i > 0; i--) {
       uint32_t voiceIndex = pool.activeIndices[i - 1];
 
-      // ==== PROCESS OSCILLATORS ====
-      float osc1 = oscillator::processOscillator(pool.osc1, voiceIndex);
-      float osc2 = oscillator::processOscillator(pool.osc2, voiceIndex);
-      float osc3 = oscillator::processOscillator(pool.osc3, voiceIndex);
-      float subOsc = oscillator::processOscillator(pool.subOsc, voiceIndex);
+      // Process Oscillators (with Interpolation)
+      float osc1PhaseInc = interpolatePitchInc(
+          pool.osc1, pool.modMatrix, ModDest::Osc1Pitch, voiceIndex, s);
+      float osc1 =
+          oscillator::processOscillator(pool.osc1, voiceIndex, osc1PhaseInc);
 
-      float mixedOsc = (osc1 + osc2 + osc3 + subOsc) * pool.oscMixGain;
+      float osc2PhaseInc = interpolatePitchInc(
+          pool.osc2, pool.modMatrix, ModDest::Osc2Pitch, voiceIndex, s);
+      float osc2 =
+          oscillator::processOscillator(pool.osc2, voiceIndex, osc2PhaseInc);
 
-      // ==== PROCESS ENVELOPES ====
-      float ampEnv = envelope::processEnvelope(pool.ampEnv, voiceIndex);
-      float filterEnvVal =
-          envelope::processEnvelope(pool.filterEnv, voiceIndex);
+      float osc3PhaseInc = interpolatePitchInc(
+          pool.osc3, pool.modMatrix, ModDest::Osc3Pitch, voiceIndex, s);
+      float osc3 =
+          oscillator::processOscillator(pool.osc3, voiceIndex, osc3PhaseInc);
 
-      // ==== PROCESS FILTERS ====
+      float subOscPhaseInc = interpolatePitchInc(
+          pool.subOsc, pool.modMatrix, ModDest::SubOscPitch, voiceIndex, s);
+      float subOsc = oscillator::processOscillator(pool.subOsc, voiceIndex,
+                                                   subOscPhaseInc);
+
+      // Mix (sum) Oscillators
+      float mixedOscs = (osc1 + osc2 + osc3 + subOsc) * pool.oscMixGain;
+
+      // Process Fitlers (svf & ladder)
       float filtered = filters::processSVFilter(
-          pool.svf, mixedOsc, voiceIndex, filterEnvVal, pool.invSampleRate);
-      filtered = filters::processLadderFilter(pool.ladder, filtered, voiceIndex,
-                                              filterEnvVal, pool.invSampleRate);
+          pool.svf, mixedOscs, voiceIndex,
+          pool.modMatrix.destValues[ModDest::SVFCutoff][voiceIndex],
+          pool.invSampleRate);
+
+      filtered = filters::processLadderFilter(
+          pool.ladder, filtered, voiceIndex,
+          pool.modMatrix.destValues[ModDest::LadderCutoff][voiceIndex],
+          pool.invSampleRate);
 
       // TODO(nico): Implement Saturator
       // ==== Apply saturation ====
       // filtered = processSaturator(pool.saturator, filtered);
+
+      // Process Amp Envelope
+      float ampEnv = envelope::processEnvelope(pool.ampEnv, voiceIndex);
 
       // Check if amplitude envelope completed - remove immediately
       if (pool.ampEnv.states[voiceIndex] == envelope::EnvelopeStatus::Idle) {
@@ -222,6 +327,26 @@ void processVoices(VoicePool &pool, float *output, size_t numSamples) {
     // TEMP(nico): Basic soft clip for now.
     // Mainly for protection and not as an effect
     output[s] = dsp::effects::softClipFast(sample * pool.masterGain);
+  }
+
+  /* ==== Post-block: Update prevDestValues with current value ====
+   * Will be referenced at the Pre-pass of the next block
+   * Active voices only
+   * ==============================================================
+   */
+  for (uint32_t i = 0; i < pool.activeCount; i++) {
+    uint32_t v = pool.activeIndices[i];
+    pool.modMatrix.prevDestValues[ModDest::Osc1Pitch][v] =
+        pool.modMatrix.destValues[ModDest::Osc1Pitch][v];
+
+    pool.modMatrix.prevDestValues[ModDest::Osc2Pitch][v] =
+        pool.modMatrix.destValues[ModDest::Osc2Pitch][v];
+
+    pool.modMatrix.prevDestValues[ModDest::Osc3Pitch][v] =
+        pool.modMatrix.destValues[ModDest::Osc3Pitch][v];
+
+    pool.modMatrix.prevDestValues[ModDest::SubOscPitch][v] =
+        pool.modMatrix.destValues[ModDest::SubOscPitch][v];
   }
 }
 

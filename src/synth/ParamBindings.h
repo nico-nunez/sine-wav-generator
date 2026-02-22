@@ -58,16 +58,15 @@ enum ParamID {
   SVF_MODE,
   SVF_CUTOFF,
   SVF_RESONANCE,
-  SVF_ENV_AMOUNT,
 
   // Ladder Filter
   LADDER_ENABLED,
   LADDER_CUTOFF,
   LADDER_RESONANCE,
   LADDER_DRIVE,
-  LADDER_ENV_AMOUNT,
 
   MASTER_GAIN,
+
   PARAM_COUNT,
 };
 
@@ -131,13 +130,11 @@ constexpr ParamMapping PARAM_NAMES[] = {
     {SVF_MODE, "svf.mode", ParamValueType::FILTER_MODE},
     {SVF_CUTOFF, "svf.cutoff", ParamValueType::FLOAT},
     {SVF_RESONANCE, "svf.resonance", ParamValueType::FLOAT},
-    {SVF_ENV_AMOUNT, "svf.envAmount", ParamValueType::FLOAT},
     {SVF_ENABLED, "svf.enabled", ParamValueType::BOOL},
 
     {LADDER_CUTOFF, "ladder.cutoff", ParamValueType::FLOAT},
     {LADDER_RESONANCE, "ladder.resonance", ParamValueType::FLOAT},
     {LADDER_DRIVE, "ladder.drive", ParamValueType::FLOAT},
-    {LADDER_ENV_AMOUNT, "ladder.envAmount", ParamValueType::FLOAT},
     {LADDER_ENABLED, "ladder.enabled", ParamValueType::BOOL},
 
     {FILTER_ENV_ATTACK, "filterEnv.attack", ParamValueType::FLOAT},
@@ -161,6 +158,8 @@ void initParamBindings(synth::Engine &engine);
 float getParamValueByID(
     const Engine &engine, ParamID id,
     ParamValueFormat valueFormat = ParamValueFormat::DENORMALIZED);
+
+void printParamList(const char *optionalParam);
 
 void setParamValueByID(
     Engine &engine, ParamID id, float value,

@@ -1,0 +1,155 @@
+#pragma once
+
+#include "synth/Types.h"
+
+#include <cstdint>
+
+namespace synth::mod_matrix {
+// ==== Modulation Sources ====
+enum ModSrc {
+  NoSrc = 0,
+
+  // Envelopes — all three, whether or not they're "doing anything" currently
+  AmpEnv,    // 0.0–1.0, always running per voice
+  FilterEnv, // 0.0–1.0, always running per voice
+  ModEnv,    // 0.0–1.0, general-purpose, not hardwired to anything
+
+  // LFOs — stubs for now, return 0 until implemented
+  // (adding them to the enum now avoids refactoring the matrix later)
+  LFO1,
+  LFO2,
+  LFO3,
+
+  // Per-note values — available from the moment a voice is allocated
+  Velocity, // 0.0–1.0 from MIDI note-on velocity
+  Noise,    // stub: will output filtered/white noise when implemented
+
+  SRC_COUNT // used to size arrays, not a valid source
+};
+
+// ==== Modulation Destinations ====
+enum ModDest {
+  NoDest = 0,
+
+  // Filter cutoff — units are octaves (bipolar ±4)
+  // e.g. amount=+2.0 means "shift cutoff up 2 octaves at full source value"
+  SVFCutoff,
+  LadderCutoff,
+
+  // Filter resonance — units are linear ±1.0
+  // Added on top of the base resonance setting
+  SVFResonance,
+  LadderResonance,
+
+  // Oscillator pitch — units are semitones (bipolar ±24)
+  // Applied multiplicatively to phase increment at the source value
+  Osc1Pitch,
+  Osc2Pitch,
+  Osc3Pitch,
+  SubOscPitch,
+
+  // Oscillator mix level — units are linear ±1.0
+  // Added on top of the base mixLevel setting (clamped to 0–4)
+  Osc1Mix,
+  Osc2Mix,
+  Osc3Mix,
+  SubOscMix,
+
+  DEST_COUNT // used to size arrays, not a valid dest
+};
+
+// ==== Modulation Routing ====
+constexpr int MAX_MOD_ROUTES = 16;
+
+using ModDest2D = float[ModDest::DEST_COUNT][MAX_VOICES];
+
+struct ModRoute {
+  ModSrc src = ModSrc::NoSrc;
+  ModDest dest = ModDest::NoDest;
+  float amount = 0.0f;
+};
+
+struct ModMatrix {
+  ModRoute routes[MAX_MOD_ROUTES];
+  uint8_t count = 0;
+
+  // engine block-rate output of pre-pass
+  ModDest2D destValues = {};
+
+  // interpolation state, persists between engine blocks
+  ModDest2D prevDestValues = {};
+
+  // Stack-local inside processVoices
+  // Need to zero out each loop if I keep it here
+  ModDest2D destStepValues = {};
+};
+
+bool addRoute(ModMatrix &matrix, ModSrc src, ModDest dest, float amount);
+bool addRoute(ModMatrix &matrix, const ModRoute &route);
+bool removeRoute(ModMatrix &matrix, uint8_t index);
+void clearRoutes(ModMatrix &matrix);
+
+void clearPrevModDests(ModMatrix &matrix);
+void clearModDestSteps(ModMatrix &matrix);
+void setModDestStep(ModMatrix &matrix, ModDest dest, uint32_t voiceIndex,
+                    float invNumSamples);
+
+// ==== Parsing Helpers ====
+struct ModSrcMapping {
+  const char *name;
+  const ModSrc src;
+};
+
+inline constexpr ModSrcMapping
+    modSrcMappings[ModSrc::SRC_COUNT - 1] = // Not including "NoSrc"
+    {
+        // Envelopes
+        {"ampEnv", ModSrc::AmpEnv},
+        {"filterEnv", ModSrc::FilterEnv},
+        {"modEnv", ModSrc::ModEnv},
+
+        // LFOs
+        {"lfo1", ModSrc::LFO1},
+        {"lfo2", ModSrc::LFO2},
+        {"lfo3", ModSrc::LFO3},
+
+        // Other
+        {"velocity", ModSrc::Velocity},
+        {"noise", ModSrc::Noise},
+};
+
+struct ModDestMapping {
+  const char *name;
+  const ModDest dest;
+};
+inline constexpr ModDestMapping
+    modDestMappings[ModDest::DEST_COUNT - 1] = // Not including "NoDest"
+    {
+        // Filter Cutoff
+        {"svf.cutoff", ModDest::SVFCutoff},
+        {"ladder.cutoff", ModDest::LadderCutoff},
+
+        // Filter Resonance
+        {"svf.resonance", ModDest::SVFResonance},
+        {"ladder.resonance", ModDest::LadderResonance},
+
+        // Oscillator Pitch
+        {"osc1.pitch", ModDest::Osc1Pitch},
+        {"osc2.pitch", ModDest::Osc2Pitch},
+        {"osc3.pitch", ModDest::Osc3Pitch},
+        {"subOsc.pitch", ModDest::SubOscPitch},
+
+        // Oscillator Mix
+        {"osc1.mixLevel", ModDest::Osc1Mix},
+        {"osc2.mixLevel", ModDest::Osc2Mix},
+        {"osc3.mixLevel", ModDest::Osc3Mix},
+        {"subOsc.mixLevel", ModDest::SubOscMix},
+};
+
+ModSrc modSrcFromString(const char *str);
+ModDest modDestFromString(const char *str);
+
+const char *modSrcToString(ModSrc src);
+const char *modDestToString(ModDest dst);
+
+} // namespace synth::mod_matrix
