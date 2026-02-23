@@ -17,6 +17,7 @@
 - Offer suggestions, explanations, and guidance instead of making changes
 - When presenting options, explain trade-offs but lean toward industry best practices
 - Exception: Documentation and reference materials can be created/updated when asked
+- **"Plan" means a doc** - When asked to "make a plan" or "create a plan", write a planning document in `_docs_/` (or update the roadmap). Do NOT enter plan mode.
 
 ## Documentation Style
 Reference docs in `_docs_/` (note the underscores) should be:

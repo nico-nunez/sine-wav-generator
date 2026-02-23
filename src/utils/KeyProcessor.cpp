@@ -65,21 +65,14 @@ static void keyEventCallback(device_io::KeyEvent event, void *userContext) {
   }
 }
 
-int startKeyInputCapture(hSynthSession sessionPtr) {
-  printf("KeyCapture Example\n");
-  printf("------------------\n");
-  printf("Press keys to see events. ESC to quit.\n\n");
-
-  // 1. Initialize Cocoa app
-  device_io::initKeyCaptureApp();
-
+hMidiSession initMidiSession(hSynthSession sessionPtr) {
   // 1a. Setup MIDI on this thread's run loop for now
   constexpr size_t MAX_MIDI_DEVICES = 16;
   device_io::MidiSource midiSourceBuffer[MAX_MIDI_DEVICES];
   size_t numMidiDevices =
       device_io::getMidiSources(midiSourceBuffer, MAX_MIDI_DEVICES);
 
-  device_io::hMidiSession midiSession = nullptr;
+  hMidiSession midiSession = nullptr;
 
   if (numMidiDevices) {
     // Display MIDI source options
@@ -87,9 +80,15 @@ int startKeyInputCapture(hSynthSession sessionPtr) {
       printf("%ld. %s\n", i, midiSourceBuffer[i].displayName);
     }
 
-    int srcIndex;
+    uint32_t srcIndex;
     LogF("Enter midi device number: ");
     std::cin >> srcIndex;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    if (srcIndex < 0 || srcIndex >= numMidiDevices) {
+      printf("Invalid option selected: %d", srcIndex);
+      return midiSession;
+    }
 
     midiSession = device_io::setupMidiSession({}, midiCallback, sessionPtr);
 
@@ -101,6 +100,18 @@ int startKeyInputCapture(hSynthSession sessionPtr) {
   } else {
     synth::utils::LogF("No MIDI devices found\n");
   }
+
+  return midiSession;
+}
+
+int startKeyInputCapture(hSynthSession sessionPtr,
+                         hMidiSession midiSessionPtr) {
+  printf("KeyCapture Example\n");
+  printf("------------------\n");
+  printf("Press keys to see events. ESC to quit.\n\n");
+
+  // 1. Initialize Cocoa app
+  device_io::initKeyCaptureApp();
 
   // 2. Create a minimal window (required for local capture without permissions)
   device_io::WindowConfig config = device_io::defaultWindowConfig();
@@ -146,9 +157,9 @@ int startKeyInputCapture(hSynthSession sessionPtr) {
   // 5. Cleanup
   device_io::stopKeyCapture();
 
-  if (midiSession) {
-    device_io::stopMidiSession(midiSession);
-    device_io::cleanupMidiSession(midiSession);
+  if (midiSessionPtr) {
+    device_io::stopMidiSession(midiSessionPtr);
+    device_io::cleanupMidiSession(midiSessionPtr);
   }
 
   printf("Done.\n");

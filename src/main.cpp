@@ -87,10 +87,12 @@ int main() {
 
   synth_io::startSession(session);
 
+  auto midiSession = synth::utils::initMidiSession(session);
+
   std::thread terminalWorker(getUserInput, std::ref(engine), session);
   terminalWorker.detach();
 
-  synth::utils::startKeyInputCapture(session);
+  synth::utils::startKeyInputCapture(session, midiSession);
 
   /* This currently unreachable on MacOS due to `terminal:nil` being called
    * in `stopKeyCaptureLoop()` and immediately exits app.
