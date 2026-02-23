@@ -14,15 +14,13 @@ enum ModSrc {
   FilterEnv, // 0.0–1.0, always running per voice
   ModEnv,    // 0.0–1.0, general-purpose, not hardwired to anything
 
-  // LFOs — stubs for now, return 0 until implemented
-  // (adding them to the enum now avoids refactoring the matrix later)
   LFO1,
   LFO2,
   LFO3,
 
   // Per-note values — available from the moment a voice is allocated
   Velocity, // 0.0–1.0 from MIDI note-on velocity
-  Noise,    // stub: will output filtered/white noise when implemented
+  Noise,
 
   SRC_COUNT // used to size arrays, not a valid source
 };
@@ -32,24 +30,20 @@ enum ModDest {
   NoDest = 0,
 
   // Filter cutoff — units are octaves (bipolar ±4)
-  // e.g. amount=+2.0 means "shift cutoff up 2 octaves at full source value"
   SVFCutoff,
   LadderCutoff,
 
   // Filter resonance — units are linear ±1.0
-  // Added on top of the base resonance setting
   SVFResonance,
   LadderResonance,
 
   // Oscillator pitch — units are semitones (bipolar ±24)
-  // Applied multiplicatively to phase increment at the source value
   Osc1Pitch,
   Osc2Pitch,
   Osc3Pitch,
   SubOscPitch,
 
   // Oscillator mix level — units are linear ±1.0
-  // Added on top of the base mixLevel setting (clamped to 0–4)
   Osc1Mix,
   Osc2Mix,
   Osc3Mix,
@@ -113,7 +107,7 @@ inline constexpr ModSrcMapping
         {"lfo2", ModSrc::LFO2},
         {"lfo3", ModSrc::LFO3},
 
-        // Other
+        // Per-note
         {"velocity", ModSrc::Velocity},
         {"noise", ModSrc::Noise},
 };

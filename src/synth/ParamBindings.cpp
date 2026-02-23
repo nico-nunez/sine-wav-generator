@@ -3,12 +3,13 @@
 #include "Engine.h"
 #include "Envelope.h"
 #include "synth/Filters.h"
+#include "synth/ParamRanges.h"
 
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 
-namespace synth::param_bindings {
+namespace synth::param::bindings {
 
 // Anonymous Helpers
 namespace {
@@ -62,38 +63,66 @@ ParamBinding makeParamBinding(SVFMode *ptr, int min, int max) {
 void bindSVFilter(ParamBinding *bindings, ParamID baseId,
                   filters::SVFilter &filter) {
   bindings[baseId + 0] = makeParamBinding(&filter.enabled);
-  bindings[baseId + 1] = makeParamBinding(&filter.mode, 0, 3); // LP/HP/BP/Notch
-  bindings[baseId + 2] = makeParamBinding(&filter.cutoff, 20.0f, 20000.0f);
-  bindings[baseId + 3] = makeParamBinding(&filter.resonance, 0.0f, 1.0f);
-  // bindings[baseId + 4] = makeParamBinding(&filter.envAmount, -4.0f, 4.0f);
+
+  bindings[baseId + 1] =
+      makeParamBinding(&filter.mode, ranges::filter::FILTER_MODE_MIN,
+                       ranges::filter::FILTER_MODE_MAX);
+
+  bindings[baseId + 2] = makeParamBinding(
+      &filter.cutoff, ranges::filter::CUTOFF_MIN, ranges::filter::CUTOFF_MAX);
+
+  bindings[baseId + 3] =
+      makeParamBinding(&filter.resonance, ranges::filter::RESONANCE_MIN,
+                       ranges::filter::RESONANCE_MAX);
 }
 
 void bindLadderFilter(ParamBinding *bindings, ParamID baseId,
                       filters::LadderFilter &filter) {
   bindings[baseId + 0] = makeParamBinding(&filter.enabled);
-  bindings[baseId + 1] = makeParamBinding(&filter.cutoff, 20.0f, 20000.0f);
-  bindings[baseId + 2] = makeParamBinding(&filter.resonance, 0.0f, 1.0f);
-  bindings[baseId + 3] = makeParamBinding(&filter.drive, 1.0f, 10.0f);
-  //  bindings[baseId + 4] = makeParamBinding(&filter.envAmount, -4.0f, 4.0f);
+
+  bindings[baseId + 1] = makeParamBinding(
+      &filter.cutoff, ranges::filter::CUTOFF_MIN, ranges::filter::CUTOFF_MAX);
+
+  bindings[baseId + 2] =
+      makeParamBinding(&filter.resonance, ranges::filter::RESONANCE_MIN,
+                       ranges::filter::RESONANCE_MAX);
+
+  bindings[baseId + 3] = makeParamBinding(
+      &filter.drive, ranges::filter::DRIVE_MIN, ranges::filter::DRIVE_MAX);
 }
 
 // Oscillator Bindings
 void bindOscillator(ParamBinding *bindings, ParamID baseId,
                     oscillator::Oscillator &osc) {
-  bindings[baseId + 0] = makeParamBinding(&osc.waveform, 0, 3);
-  bindings[baseId + 1] = makeParamBinding(&osc.mixLevel, 0.0f, 4.0f);
-  bindings[baseId + 2] = makeParamBinding(&osc.detuneAmount, -100.0f, 100.0f);
-  bindings[baseId + 3] = makeParamBinding(&osc.octaveOffset, -2, 2);
+  bindings[baseId + 0] = makeParamBinding(
+      &osc.waveform, ranges::osc::WAVEFORM_MIN, ranges::osc::WAVEFORM_MAX);
+
+  bindings[baseId + 1] = makeParamBinding(
+      &osc.mixLevel, ranges::osc::MIX_LEVEL_MIN, ranges::osc::MIX_LEVEL_MAX);
+
+  bindings[baseId + 2] = makeParamBinding(
+      &osc.detuneAmount, ranges::osc::DETUNE_MIN, ranges::osc::DETUNE_MAX);
+
+  bindings[baseId + 3] = makeParamBinding(
+      &osc.octaveOffset, ranges::osc::OCTAVE_MIN, ranges::osc::OCTAVE_MAX);
+
   bindings[baseId + 4] = makeParamBinding(&osc.enabled);
 }
 
 // Envelope Bindings
 void bindEnvelope(ParamBinding *bindings, ParamID baseId,
                   envelope::Envelope &env) {
-  bindings[baseId + 0] = makeParamBinding(&env.attackMs, 0.0f, 10000.0f);
-  bindings[baseId + 1] = makeParamBinding(&env.decayMs, 0.0f, 10000.0f);
-  bindings[baseId + 2] = makeParamBinding(&env.sustainLevel, 0.0f, 1.0f);
-  bindings[baseId + 3] = makeParamBinding(&env.releaseMs, 0.0f, 10000.0f);
+  bindings[baseId + 0] = makeParamBinding(&env.attackMs, ranges::env::TIME_MIN,
+                                          ranges::env::TIME_MAX);
+
+  bindings[baseId + 1] = makeParamBinding(&env.decayMs, ranges::env::TIME_MIN,
+                                          ranges::env::TIME_MAX);
+
+  bindings[baseId + 2] = makeParamBinding(
+      &env.sustainLevel, ranges::env::SUSTAIN_MIN, ranges::env::SUSTAIN_MAX);
+
+  bindings[baseId + 3] = makeParamBinding(&env.releaseMs, ranges::env::TIME_MIN,
+                                          ranges::env::TIME_MAX);
 }
 
 // Handle updates to params with derived values
@@ -155,8 +184,9 @@ void initParamBindings(Engine &engine) {
                    engine.voicePool.ladder);
 
   // Voice Pool
-  engine.paramBindings[MASTER_GAIN] =
-      makeParamBinding(&engine.voicePool.masterGain, 0.0f, 2.0f);
+  engine.paramBindings[MASTER_GAIN] = makeParamBinding(
+      &engine.voicePool.masterGain, ranges::global::MASTER_GAIN_MIN,
+      ranges::global::MASTER_GAIN_MAX);
 }
 
 // ==== Param Getter/Setter ====
@@ -325,4 +355,4 @@ WaveformType getWaveformType(const char *inputValue) {
   // default to Sine
   return WaveformType::Sine;
 }
-} // namespace synth::param_bindings
+} // namespace synth::param::bindings

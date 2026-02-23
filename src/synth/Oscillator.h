@@ -49,6 +49,6 @@ float processOscillator(Oscillator &osc, uint32_t voiceIndex);
 
 // Mod Matrix version allowing pitch modulation (called/returned via original)
 float processOscillator(Oscillator &osc, uint32_t voiceIndex,
-                        float phaseIncrement);
+                        float phaseIncrement, float mixLevel);
 
 } // namespace synth::oscillator

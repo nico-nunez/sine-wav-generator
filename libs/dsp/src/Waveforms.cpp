@@ -90,6 +90,7 @@ float triangle(float phase) { return 1.0f - 4.0f * std::abs(phase - 0.5f); }
 float processWaveform(WaveformType type, float phase, float phaseIncrement,
                       float pulseWidth) {
   switch (type) {
+  case WaveformType::WAVEFORM_COUNT:
   case WaveformType::Sine:
     return sine(phase);
   case WaveformType::Saw:

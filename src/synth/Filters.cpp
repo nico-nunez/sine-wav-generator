@@ -43,10 +43,8 @@ float processSVFilter(SVFilter &filter, float input, uint32_t voiceIndex,
 
   float modCutoff = computeEffectiveCutoff(filter.cutoff, cutoffModOctaves);
 
-  // TODO(nico): is this correct (filterEnvVal -> cutoffModOctaves)
-  // Use cached coeffs when envelope is idle, recompute when active
   SVFCoeffs c =
-      (cutoffModOctaves > 0.001f)
+      (std::abs(cutoffModOctaves) > 0.001f)
           ? dsp::filters::computeSVFCoeffs(
                 modCutoff, 0.5f + filter.resonance * 20.0f, invSampleRate)
           : filter.coeffs;
@@ -55,6 +53,7 @@ float processSVFilter(SVFilter &filter, float input, uint32_t voiceIndex,
       dsp::filters::processSVF(input, c, filter.voiceStates[voiceIndex]);
 
   switch (filter.mode) {
+  case SVFMode::MODE_COUNT:
   case SVFMode::LP:
     return out.lp;
   case SVFMode::HP:
@@ -94,10 +93,8 @@ float processLadderFilter(LadderFilter &filter, float input,
 
   float modCutoff = computeEffectiveCutoff(filter.cutoff, cutoffModOctaves);
 
-  // TODO(nico): is this correct (filterEnvVal -> cutoffModOctaves)
-  // Use cached coeffs when envelope is idle, recompute when active
   float coeff =
-      (cutoffModOctaves > 0.001f)
+      (std::abs(cutoffModOctaves) > 0.001f)
           ? 2.0f * std::sin(dsp::math::PI_F * modCutoff * invSampleRate)
           : filter.coeff;
 

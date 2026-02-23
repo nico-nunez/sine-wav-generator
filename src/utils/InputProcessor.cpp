@@ -16,7 +16,7 @@
 namespace synth::utils {
 namespace s_io = synth_io;
 
-namespace pb = param_bindings;
+namespace pb = param::bindings;
 
 // ==== Internal Helpers ====
 namespace {
@@ -29,7 +29,7 @@ int setInputParam(std::istringstream &iss, s_io::hSynthSession session) {
   iss >> paramName;
 
   pb::ParamMapping param = pb::findParamByName(paramName.c_str());
-  if (param.id == param_bindings::PARAM_COUNT) {
+  if (param.id == param::bindings::PARAM_COUNT) {
     printf("Error: Unknown parameter '%s'\n", paramName.c_str());
     return 1;
   }
@@ -106,7 +106,7 @@ void parseCommand(const std::string &line, Engine &engine,
     iss >> paramName;
 
     pb::ParamMapping param = pb::findParamByName(paramName.c_str());
-    if (param.id == param_bindings::PARAM_COUNT) {
+    if (param.id == param::bindings::PARAM_COUNT) {
       printf("Error: Unknown parameter '%s'\n", paramName.c_str());
       return;
     }

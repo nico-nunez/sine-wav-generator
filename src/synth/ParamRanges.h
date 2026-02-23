@@ -1,0 +1,83 @@
+#pragma once
+
+#include "synth/Filters.h"
+#include "synth/Oscillator.h"
+#include <cstdint>
+
+namespace synth::param::ranges {
+using WaveformType = oscillator::WaveformType;
+
+namespace osc {
+inline constexpr uint8_t WAVEFORM_MIN = 0;
+inline constexpr uint8_t WAVEFORM_MAX =
+    static_cast<uint8_t>(WaveformType::WAVEFORM_COUNT) - 1;
+inline constexpr float MIX_LEVEL_MIN = 0.0f;
+inline constexpr float MIX_LEVEL_MAX = 4.0f;
+inline constexpr float DETUNE_MIN = -100.0f; // cents
+inline constexpr float DETUNE_MAX = 100.0f;
+inline constexpr int8_t OCTAVE_MIN = -2;
+inline constexpr int8_t OCTAVE_MAX = 2;
+
+float clampMixLevel(float mixLevel);
+float clampDetune(float detuneAmount);
+float clampOctave(int8_t octaveOffset);
+} // namespace osc
+
+namespace env {
+inline constexpr float TIME_MIN = 0.0f;     // ms
+inline constexpr float TIME_MAX = 10000.0f; // ms
+inline constexpr float SUSTAIN_MIN = 0.0f;
+inline constexpr float SUSTAIN_MAX = 1.0f;
+
+float clampTime(float timeAmount);
+float clampSustain(float sustainLevel);
+} // namespace env
+
+namespace filter {
+inline constexpr uint8_t FILTER_MODE_MIN = 0;
+inline constexpr uint8_t FILTER_MODE_MAX =
+    static_cast<uint8_t>(filters::SVFMode::MODE_COUNT) - 1;
+inline constexpr float CUTOFF_MIN = 20.0f;    // Hz
+inline constexpr float CUTOFF_MAX = 20000.0f; // Hz
+inline constexpr float RESONANCE_MIN = 0.0f;
+inline constexpr float RESONANCE_MAX = 1.0f;
+inline constexpr float DRIVE_MIN = 1.0f; // neutral / linear path
+inline constexpr float DRIVE_MAX = 10.0f;
+
+float clampCutoff(float cutoff);
+float clampResonance(float resonance);
+float clampDrive(float drive);
+} // namespace filter
+
+namespace mod {
+// Cutoff modulation depth (octaves, bipolar)
+inline constexpr float CUTOFF_MOD_MIN = -4.0f;
+inline constexpr float CUTOFF_MOD_MAX = 4.0f;
+
+// Pitch modulation depth (semitones, bipolar)
+inline constexpr float PITCH_MOD_MIN = -24.0f;
+inline constexpr float PITCH_MOD_MAX = 24.0f;
+
+// Mix level modulation depth (linear, bipolar) — added to base mixLevel
+inline constexpr float MIX_LEVEL_MOD_MIN = -1.0f;
+inline constexpr float MIX_LEVEL_MOD_MAX = 1.0f;
+
+// Resonance modulation depth (linear, bipolar) — added to base resonance
+inline constexpr float RESONANCE_MOD_MIN = -1.0f;
+inline constexpr float RESONANCE_MOD_MAX = 1.0f;
+
+float clampCutoffMod(float cutoffMod);
+float clampPitchMod(float pitchMod);
+float clampMixLevelMod(float mixLevel);
+float clampResonanceMod(float resonanceMod);
+
+} // namespace mod
+
+namespace global {
+inline constexpr float MASTER_GAIN_MIN = 0.0f;
+inline constexpr float MASTER_GAIN_MAX = 2.0f; // 2.0 ≈ +6 dB
+
+float clampMasterGain(float masterGain);
+} // namespace global
+
+} // namespace synth::param::ranges

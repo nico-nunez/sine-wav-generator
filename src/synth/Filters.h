@@ -7,7 +7,7 @@
 
 namespace synth::filters {
 
-enum class SVFMode { LP, HP, BP, Notch };
+enum class SVFMode { LP, HP, BP, Notch, MODE_COUNT };
 using SVFState = dsp::filters::SVFState;
 using SVFCoeffs = dsp::filters::SVFCoeffs;
 using SVFOutputs = dsp::filters::SVFOutputs;

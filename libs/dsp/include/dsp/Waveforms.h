@@ -2,12 +2,7 @@
 
 namespace dsp::waveforms {
 
-enum class WaveformType {
-  Sine,
-  Saw,
-  Square,
-  Triangle,
-};
+enum class WaveformType { Sine, Saw, Square, Triangle, WAVEFORM_COUNT };
 
 // Sine wave (band-limited as-is)
 float sine(float phase);

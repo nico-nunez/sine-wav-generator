@@ -8,7 +8,7 @@ namespace synth {
 struct Engine;
 }
 
-namespace synth::param_bindings {
+namespace synth::param::bindings {
 using SVFMode = filters::SVFMode;
 using WaveformType = oscillator::WaveformType;
 
@@ -173,4 +173,4 @@ const char *getParamName(ParamID id);
 SVFMode getSVFModeType(const char *inputValue);
 WaveformType getWaveformType(const char *inputValue);
 
-} // namespace synth::param_bindings
+} // namespace synth::param::bindings

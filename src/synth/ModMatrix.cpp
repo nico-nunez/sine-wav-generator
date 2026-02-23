@@ -26,7 +26,7 @@ bool addRoute(ModMatrix &matrix, const ModRoute &route) {
 }
 
 bool removeRoute(ModMatrix &matrix, uint8_t index) {
-  if (index >= MAX_MOD_ROUTES || matrix.count < 1)
+  if (index >= matrix.count || matrix.count < 1)
     return false;
 
   // TODO(nico): does order matter?  don't think it does...

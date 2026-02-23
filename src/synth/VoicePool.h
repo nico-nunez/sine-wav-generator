@@ -87,9 +87,7 @@ struct VoicePool {
   uint32_t activeIndices[MAX_VOICES]; // Dense array of active indices
 };
 
-// Initialize a VoicePool via config
-VoicePool initVoicePool(const VoicePoolConfig &config);
-
+// updating existing Engine member
 void updateVoicePoolConfig(VoicePool &pool, const VoicePoolConfig &config);
 
 // Find free or oldest voice index for voice Initialization
@@ -101,9 +99,6 @@ void initializeVoice(VoicePool &pool, uint32_t index, uint8_t midiNote,
 
 // Trigger envelope release for voice playing midiNote
 void releaseVoice(VoicePool &pool, uint8_t midiNote);
-
-// Find oldest active voice (for stealing)
-int findOldestVoice(const VoicePool &pool);
 
 // Add newly active voice (noteOn)
 void addActiveIndex(VoicePool &pool, uint32_t voiceIndex);

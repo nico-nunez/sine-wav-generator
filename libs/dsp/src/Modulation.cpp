@@ -7,6 +7,7 @@ namespace dsp::modulation {
 float processLFO(float phase, waveforms::WaveformType type, float pulseWidth) {
   // LFOs often centered around 0 with range -1 to +1
   switch (type) {
+  case waveforms::WaveformType::WAVEFORM_COUNT:
   case waveforms::WaveformType::Sine:
     return waveforms::sine(phase);
   case waveforms::WaveformType::Saw:

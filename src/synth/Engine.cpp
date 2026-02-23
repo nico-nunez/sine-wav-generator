@@ -18,14 +18,14 @@ Engine createEngine(const EngineConfig &config) {
 
   voices::updateVoicePoolConfig(engine.voicePool, config);
 
-  param_bindings::initParamBindings(engine);
+  param::bindings::initParamBindings(engine);
 
   return engine;
 }
 
 void Engine::processParamEvent(const ParamEvent &event) {
-  param_bindings::setParamValueByID(*this, static_cast<ParamID>(event.id),
-                                    event.value);
+  param::bindings::setParamValueByID(*this, static_cast<ParamID>(event.id),
+                                     event.value);
 }
 
 void Engine::processNoteEvent(const synth_io::NoteEvent &event) {

@@ -19,8 +19,8 @@ using VoiceConfig = voices::VoicePoolConfig;
 
 using WaveformType = dsp::waveforms::WaveformType;
 
-using ParamBinding = param_bindings::ParamBinding;
-using ParamID = param_bindings::ParamID;
+using ParamBinding = param::bindings::ParamBinding;
+using ParamID = param::bindings::ParamID;
 
 struct EngineConfig : VoiceConfig {
   float sampleRate = synth_io::DEFAULT_SAMPLE_RATE;
